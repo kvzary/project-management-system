@@ -28,12 +28,14 @@ class TaskCommentedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
+            ->greeting("{$this->task->project->name} → {$this->task->title}")
             ->subject('New Comment on: ' . $this->task->title)
             ->line("{$this->comment->user->name} commented on a task you are involved in.")
             ->line("**{$this->task->title}**")
             ->line($this->comment->content)
             ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
-            ->line('Thank you for using our project management system.');
+            ->line('Thank you for using our project management system.')
+            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array

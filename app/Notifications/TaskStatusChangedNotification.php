@@ -31,12 +31,14 @@ class TaskStatusChangedNotification extends Notification
         $changedByText = $this->changedBy ? " by {$this->changedBy}" : '';
 
         return (new MailMessage)
+        ->greeting("{$this->task->project->name} → {$this->task->title}")
             ->subject('Task Status Updated: ' . $this->task->title)
             ->line("A task's status has been updated{$changedByText}.")
             ->line("**{$this->task->title}**")
             ->line("{$this->formatStatus($this->oldStatus)} → {$this->formatStatus($this->newStatus)}")
             ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
-            ->line('Thank you for using our project management system.');
+            ->line('Thank you for using our project management system.')
+            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array

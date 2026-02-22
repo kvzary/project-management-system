@@ -29,11 +29,13 @@ class TaskAssignedNotification extends Notification
         $assignedByText = $this->assignedBy ? " by {$this->assignedBy}" : '';
 
         return (new MailMessage)
+            ->greeting("{$this->task->project->name} → {$this->task->title}")
             ->subject('Task Assigned: ' . $this->task->title)
             ->line("You have been assigned to a task{$assignedByText}.")
-            ->line("**{$this->task->title}**")
+            ->line("Task: **{$this->task->title}**")
             ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
-            ->line('Thank you for using our project management system.');
+            ->line('Thank you for using our project management system.')
+            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array
