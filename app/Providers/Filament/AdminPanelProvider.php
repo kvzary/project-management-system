@@ -51,10 +51,13 @@ class AdminPanelProvider extends PanelProvider {
 				Pages\Dashboard::class,
 			])
 			->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-			->widgets([
-				Widgets\AccountWidget::class,
-				Widgets\FilamentInfoWidget::class,
-			])
+			// ->widgets([
+			// 	\App\Filament\Widgets\StatsOverviewWidget::class,
+			// 	\App\Filament\Widgets\TeamTaskTrendsWidget::class,
+			// 	\App\Filament\Widgets\TasksByPriorityWidget::class,
+			// 	\App\Filament\Widgets\TeamProductivityWidget::class,
+			// 	\App\Filament\Widgets\ProjectProgressWidget::class,
+			// ])
 			->middleware([
 				EncryptCookies::class,
 				AddQueuedCookiesToResponse::class,

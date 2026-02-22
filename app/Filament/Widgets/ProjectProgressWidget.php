@@ -2,73 +2,71 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Pages\TeamWorkMonitor;
-use App\Models\User;
-use Filament\Tables\Actions\Action;
+use App\Enums\ProjectStatus;
+use App\Models\Project;
+use App\Models\WorkflowStatus;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
-class TeamProductivityWidget extends BaseWidget
+class ProjectProgressWidget extends BaseWidget
 {
-    protected static ?string $heading = 'Team Productivity';
+    protected static ?string $heading = 'Project Progress';
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 5;
 
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
+        $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+
         return $table
             ->query(
-                User::query()
-                    ->whereHas('assignedTasks')
+                Project::query()
+                    ->where('status', ProjectStatus::ACTIVE)
                     ->withCount([
-                        'assignedTasks as total_tasks' => fn (Builder $q) => $q->whereNull('deleted_at'),
-                        'assignedTasks as completed_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')->whereIn('status', ['done', 'completed']),
-                        'assignedTasks as in_progress_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')->where('status', 'in_progress'),
-                        'assignedTasks as overdue_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')
-                            ->whereNotNull('due_date')
+                        'tasks as total_tasks',
+                        'tasks as completed_tasks' => fn (Builder $q) => $q->whereIn('status', $completedSlugs),
+                        'tasks as overdue_tasks' => fn (Builder $q) => $q->whereNotNull('due_date')
                             ->where('due_date', '<', now())
-                            ->whereNotIn('status', ['done', 'completed']),
+                            ->whereNotIn('status', $completedSlugs),
                     ])
             )
             ->columns([
                 TextColumn::make('name')
-                    ->label('Team Member')
+                    ->label('Project')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('total_tasks')
-                    ->label('Total')
-                    ->sortable()
+                    ->label('Total Tasks')
                     ->alignCenter()
+                    ->sortable()
                     ->badge()
                     ->color('gray'),
+
                 TextColumn::make('completed_tasks')
                     ->label('Completed')
-                    ->sortable()
                     ->alignCenter()
+                    ->sortable()
                     ->badge()
                     ->color('success'),
-                TextColumn::make('in_progress_tasks')
-                    ->label('In Progress')
-                    ->sortable()
-                    ->alignCenter()
-                    ->badge()
-                    ->color('info'),
+
                 TextColumn::make('overdue_tasks')
                     ->label('Overdue')
-                    ->sortable()
                     ->alignCenter()
+                    ->sortable()
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'gray'),
-                TextColumn::make('completion_rate')
-                    ->label('Rate')
+
+                TextColumn::make('progress')
+                    ->label('Progress')
+                    ->alignCenter()
                     ->getStateUsing(fn ($record) => $record->total_tasks > 0
                         ? round(($record->completed_tasks / $record->total_tasks) * 100) . '%'
                         : '0%')
-                    ->alignCenter()
                     ->badge()
                     ->color(fn ($record) => match (true) {
                         $record->total_tasks === 0 => 'gray',
@@ -76,15 +74,13 @@ class TeamProductivityWidget extends BaseWidget
                         ($record->completed_tasks / max($record->total_tasks, 1)) >= 0.4 => 'warning',
                         default => 'danger',
                     }),
-            ])
-            ->actions([
-                Action::make('viewWork')
-                    ->label('View Work')
-                    ->icon('heroicon-o-eye')
-                    ->url(fn ($record) => TeamWorkMonitor::getUrl(['selectedUserId' => $record->id])),
+
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn ($record) => $record->status->colour()),
             ])
             ->defaultSort('overdue_tasks', 'desc')
             ->striped()
-            ->paginated([5, 10, 25]);
+            ->paginated([5, 10]);
     }
 }

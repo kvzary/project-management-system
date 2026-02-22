@@ -54,19 +54,17 @@
             @php
                 $priority = $record->priority?->value ?? 'medium';
                 $priorityIcon = match($priority) {
-                    'highest' => 'heroicon-s-chevron-double-up',
+                    'critical' => 'heroicon-s-chevron-double-up',
                     'high' => 'heroicon-s-chevron-up',
                     'medium' => 'heroicon-s-minus',
                     'low' => 'heroicon-s-chevron-down',
-                    'lowest' => 'heroicon-s-chevron-double-down',
                     default => 'heroicon-s-minus',
                 };
                 $priorityColor = match($priority) {
-                    'highest' => 'text-red-600',
+                    'critical' => 'text-red-600',
                     'high' => 'text-orange-500',
                     'medium' => 'text-yellow-500',
                     'low' => 'text-blue-500',
-                    'lowest' => 'text-blue-300',
                     default => 'text-gray-400',
                 };
             @endphp

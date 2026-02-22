@@ -184,11 +184,10 @@
                                 'task' => 'text-blue-500',
                             ];
                             $priorityColors = [
-                                'lowest' => 'text-gray-400',
                                 'low' => 'text-blue-400',
                                 'medium' => 'text-yellow-500',
                                 'high' => 'text-orange-500',
-                                'highest' => 'text-red-500',
+                                'critical' => 'text-red-500',
                             ];
                         @endphp
                         <a

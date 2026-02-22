@@ -3,11 +3,10 @@
 namespace App\Enums;
 
 enum TaskPriority: string {
-	case LOWEST = 'lowest';
-	case LOW = 'low';
-	case MEDIUM = 'medium';
+	case CRITICAL = 'critical';
 	case HIGH = 'high';
-	case HIGHEST = 'highest';
+	case MEDIUM = 'medium';
+	case LOW = 'low';
 
 	/**
 	 * Get all available values as an array.
@@ -21,11 +20,10 @@ enum TaskPriority: string {
 	 */
 	public function label(): string {
 		return match($this) {
-			self::LOWEST => 'Lowest',
-			self::LOW => 'Low',
-			self::MEDIUM => 'Medium',
+			self::CRITICAL => 'Critical',
 			self::HIGH => 'High',
-			self::HIGHEST => 'Highest',
+			self::MEDIUM => 'Medium',
+			self::LOW => 'Low',
 		};
 	}
 
@@ -34,24 +32,22 @@ enum TaskPriority: string {
 	 */
 	public function colour(): string {
 		return match($this) {
-			self::LOWEST => 'gray',
-			self::LOW => 'info',
-			self::MEDIUM => 'warning',
-			self::HIGH => 'danger',
-			self::HIGHEST => 'danger',
+			self::CRITICAL => 'danger',
+			self::HIGH => 'warning',
+			self::MEDIUM => 'info',
+			self::LOW => 'gray',
 		};
 	}
 
 	/**
 	 * Get a numeric value for sorting purposes.
 	 */
-	public function value(): int {
+	public function sortOrder(): int {
 		return match($this) {
-			self::LOWEST => 1,
-			self::LOW => 2,
-			self::MEDIUM => 3,
-			self::HIGH => 4,
-			self::HIGHEST => 5,
+			self::CRITICAL => 4,
+			self::HIGH => 3,
+			self::MEDIUM => 2,
+			self::LOW => 1,
 		};
 	}
 }

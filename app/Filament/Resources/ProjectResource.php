@@ -42,7 +42,7 @@ class ProjectResource extends Resource
                             }),
                         Forms\Components\TextInput::make('key')
                             ->required()
-                            ->maxLength(10)
+                            ->maxLength(50)
                             ->unique(ignoreRecord: true)
                             ->extraInputAttributes(['style' => 'text-transform: uppercase'])
                             ->dehydrateStateUsing(fn ($state) => strtoupper($state))

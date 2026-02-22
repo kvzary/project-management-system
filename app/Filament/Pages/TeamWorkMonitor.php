@@ -95,10 +95,10 @@ class TeamWorkMonitor extends Page implements HasTable
                 TextColumn::make('priority')
                     ->badge()
                     ->color(fn ($state) => match ($state?->value ?? $state) {
-                        'highest' => 'danger',
+                        'critical' => 'danger',
                         'high' => 'warning',
                         'medium' => 'info',
-                        'low', 'lowest' => 'gray',
+                        'low' => 'gray',
                         default => 'gray',
                     })
                     ->sortable(),
