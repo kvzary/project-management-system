@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Filament\Resources\TaskResource\Pages;
 use App\Models\Project;
@@ -220,6 +221,10 @@ class TaskResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\Filter::make('hide_done')
+                    ->label('Hide Done')
+                    ->query(fn (Builder $query) => $query->whereNotIn('status', [TaskStatus::DONE->value]))
+                    ->default(true),
                 Tables\Filters\SelectFilter::make('project')
                     ->relationship('project', 'name')
                     ->searchable()
