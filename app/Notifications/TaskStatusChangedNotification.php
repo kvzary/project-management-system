@@ -7,6 +7,7 @@ use App\Models\Task;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class TaskStatusChangedNotification extends Notification
@@ -22,7 +23,20 @@ class TaskStatusChangedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $changedByText = $this->changedBy ? " by {$this->changedBy}" : '';
+
+        return (new MailMessage)
+            ->subject('Task Status Updated: ' . $this->task->title)
+            ->line("A task's status has been updated{$changedByText}.")
+            ->line("**{$this->task->title}**")
+            ->line("{$this->formatStatus($this->oldStatus)} → {$this->formatStatus($this->newStatus)}")
+            ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
+            ->line('Thank you for using our project management system.');
     }
 
     public function toDatabase(object $notifiable): array

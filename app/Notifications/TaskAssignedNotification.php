@@ -7,6 +7,7 @@ use App\Models\Task;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class TaskAssignedNotification extends Notification
@@ -20,7 +21,19 @@ class TaskAssignedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $assignedByText = $this->assignedBy ? " by {$this->assignedBy}" : '';
+
+        return (new MailMessage)
+            ->subject('Task Assigned: ' . $this->task->title)
+            ->line("You have been assigned to a task{$assignedByText}.")
+            ->line("**{$this->task->title}**")
+            ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
+            ->line('Thank you for using our project management system.');
     }
 
     public function toDatabase(object $notifiable): array
