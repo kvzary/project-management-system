@@ -76,7 +76,7 @@ class AdminPanelProvider extends PanelProvider {
 				'panels::head.end',
 				fn (): string => Vite::useHotFile(public_path('hot'))
 					->useBuildDirectory('build')
-					->withEntryPoints(['resources/js/filament-fix.js'])
+					->withEntryPoints(['resources/js/filament-fix.js', 'resources/js/app.js', 'resources/css/app.css'])
 					->toHtml(),
 			);
 	}

@@ -148,6 +148,33 @@ class TeamTaskTrendsWidget extends ChartWidget
         ];
     }
 
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+            'maintainAspectRatio' => true,
+            'scales' => [
+                'x' => [
+                    'ticks' => [
+                        'maxTicksLimit' => 13,
+                        'maxRotation' => 0,
+                        'autoSkip' => true,
+                    ],
+                ],
+            ],
+            'plugins' => [
+                'legend' => [
+                    'position' => 'bottom',
+                    'labels' => [
+                        'boxWidth' => 10,
+                        'padding' => 8,
+                        'font' => ['size' => 11],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     protected function getType(): string
     {
         return 'line';

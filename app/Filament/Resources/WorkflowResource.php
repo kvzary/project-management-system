@@ -66,7 +66,7 @@ class WorkflowResource extends Resource
                                     ->label('Marks task as completed')
                                     ->default(false),
                             ])
-                            ->columns(4)
+                            ->columns(['default' => 1, 'sm' => 2, 'xl' => 4])
                             ->reorderable('position')
                             ->orderColumn('position')
                             ->defaultItems(0)

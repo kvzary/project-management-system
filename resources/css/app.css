@@ -1,3 +1,88 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (max-width: 767px) {
+    /* Prevent horizontal scroll on table container */
+    .fi-ta-ctn,
+    .fi-ta-content,
+    .fi-ta-wrp {
+        overflow-x: hidden !important;
+    }
+
+    /* Hide table header on mobile */
+    .fi-ta-table thead {
+        display: none;
+    }
+
+    /* Make table, tbody, tr, td block elements */
+    .fi-ta-table,
+    .fi-ta-table tbody,
+    .fi-ta-table tr {
+        display: block;
+        width: 100%;
+    }
+
+    /* Style each row as a card */
+    .fi-ta-table tbody tr {
+        border: 1px solid rgb(229 231 235);
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        background: white;
+    }
+
+    .dark .fi-ta-table tbody tr {
+        border-color: rgb(55 65 81);
+        background: rgb(31 41 55);
+    }
+
+    /* Style each cell as a row with label */
+    .fi-ta-table td {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        border: none;
+        min-height: 2rem;
+    }
+
+    /* Allow value side to wrap and shrink — prevents off-screen overflow */
+    .fi-ta-table td .fi-ta-col-wrp {
+        min-width: 0;
+        flex: 1;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        text-align: right;
+    }
+
+    /* Show column label before each value */
+    .fi-ta-table td[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgb(107 114 128);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+        margin-right: 0.5rem;
+        white-space: nowrap;
+    }
+
+    /* Ensure badge content shows properly */
+    .fi-ta-table td .fi-badge,
+    .fi-ta-table td span[class*="badge"],
+    .fi-ta-table td .fi-ta-col-wrp {
+        flex-shrink: 0;
+    }
+
+    /* Hide bulk action checkbox column and empty cells on mobile */
+    .fi-ta-table td:empty,
+    .fi-ta-table td.fi-ta-cell:has(.fi-ta-record-checkbox),
+    .fi-ta-table td[class*="checkbox"],
+    .fi-ta-table th:first-child,
+    .fi-ta-table td:first-child:has(input[type="checkbox"]) {
+        display: none !important;
+    }
+}

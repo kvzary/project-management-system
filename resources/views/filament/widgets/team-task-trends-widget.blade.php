@@ -9,40 +9,40 @@
 
 <x-filament-widgets::widget class="fi-wi-chart">
     <x-filament::section :heading="$heading">
-        <x-slot name="headerEnd">
-            <div class="flex items-center gap-2 sm:-my-2">
 
-                {{-- Assignee Filter --}}
-                <x-filament::input.wrapper inline-prefix wire:target="assigneeFilter" class="w-max">
-                    <x-filament::input.select inline-prefix wire:model.live="assigneeFilter">
-                        @foreach ($assigneeOptions as $value => $label)
+        {{-- Filter Bar — stacks on mobile, inline on sm+ --}}
+        <div class="flex flex-col gap-2 mb-4 sm:flex-row sm:flex-wrap sm:items-center">
+
+            {{-- Assignee Filter --}}
+            <x-filament::input.wrapper inline-prefix wire:target="assigneeFilter" class="w-full sm:w-auto">
+                <x-filament::input.select inline-prefix wire:model.live="assigneeFilter">
+                    @foreach ($assigneeOptions as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
+
+            {{-- Status Filter --}}
+            <x-filament::input.wrapper inline-prefix wire:target="statusFilter" class="w-full sm:w-auto">
+                <x-filament::input.select inline-prefix wire:model.live="statusFilter">
+                    @foreach ($statusOptions as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
+
+            {{-- Year Filter --}}
+            @if ($filters)
+                <x-filament::input.wrapper inline-prefix wire:target="filter" class="w-full sm:w-auto">
+                    <x-filament::input.select inline-prefix wire:model.live="filter">
+                        @foreach ($filters as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
+            @endif
 
-                {{-- Status Filter --}}
-                <x-filament::input.wrapper inline-prefix wire:target="statusFilter" class="w-max">
-                    <x-filament::input.select inline-prefix wire:model.live="statusFilter">
-                        @foreach ($statusOptions as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
-
-                {{-- Year Filter --}}
-                @if ($filters)
-                    <x-filament::input.wrapper inline-prefix wire:target="filter" class="w-max">
-                        <x-filament::input.select inline-prefix wire:model.live="filter">
-                            @foreach ($filters as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                @endif
-
-            </div>
-        </x-slot>
+        </div>
 
         <div>
             <div

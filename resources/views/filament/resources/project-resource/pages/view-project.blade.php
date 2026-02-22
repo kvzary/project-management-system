@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     {{-- Presence & Members Bar --}}
-    <div wire:poll.15s="trackPresence" class="mb-4 flex flex-wrap items-center justify-between gap-4 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+    <div wire:poll.15s="trackPresence" class="mb-4 flex flex-col gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
         <div class="flex items-center gap-3 text-sm">
             <x-filament::icon icon="heroicon-o-briefcase" class="w-5 h-5 text-primary-500" />
             <span class="font-bold text-gray-900 dark:text-white">{{ $this->record->key }}</span>
@@ -67,7 +67,7 @@
         </div>
     </div>
 
-    <div class="flex gap-6">
+    <div class="flex flex-col gap-6 lg:flex-row">
         {{-- Main Content --}}
         <div class="flex-1 min-w-0 space-y-6">
             {{-- Project Stats --}}
@@ -84,7 +84,7 @@
                     'primary' => 'text-sky-600 dark:text-sky-400',
                 ];
             @endphp
-            <div class="grid grid-cols-{{ min($workflowStatuses->count() + 1, 6) }} gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ min($workflowStatuses->count() + 1, 6) }} gap-4">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                     <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {{ $totalTasks }}
@@ -192,7 +192,7 @@
                         @endphp
                         <a
                             href="{{ route('filament.admin.resources.tasks.view', $task) }}"
-                            class="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                            class="flex flex-wrap items-center gap-2 sm:gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         >
                             {{-- Type Icon --}}
                             <x-filament::icon
@@ -302,7 +302,7 @@
         </div>
 
         {{-- Details Sidebar --}}
-        <div class="w-72 flex-shrink-0">
+        <div class="w-full lg:w-72 lg:flex-shrink-0">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm sticky top-4 border border-gray-200 dark:border-gray-700">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Details</h3>
