@@ -166,6 +166,13 @@ class Project extends Model {
 	}
 
 	/**
+	 * Scope a query to only include completed projects.
+	 */
+	public function scopeCompleted($query) {
+		return $query->where('status', ProjectStatus::COMPLETED);
+	}
+
+	/**
 	 * Determine if the project is archived.
 	 */
 	public function isArchived(): bool {
@@ -177,5 +184,12 @@ class Project extends Model {
 	 */
 	public function isOnHold(): bool {
 		return $this->status === ProjectStatus::ON_HOLD;
+	}
+
+	/**
+	 * Determine if the project is completed.
+	 */
+	public function isCompleted(): bool {
+		return $this->status === ProjectStatus::COMPLETED;
 	}
 }

@@ -169,6 +169,10 @@ class ProjectResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\Filter::make('hide_completed')
+                    ->label('Hide Completed')
+                    ->query(fn (Builder $query) => $query->whereNotIn('status', [ProjectStatus::COMPLETED->value]))
+                    ->default(true),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(ProjectStatus::class),
                 Tables\Filters\SelectFilter::make('owner')

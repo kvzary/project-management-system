@@ -4,8 +4,9 @@ namespace App\Enums;
 
 enum ProjectStatus: string {
 	case ACTIVE = 'active';
-	case ARCHIVED = 'archived';
 	case ON_HOLD = 'on_hold';
+	case COMPLETED = 'completed';
+	case ARCHIVED = 'archived';
 
 	/**
 	 * Get all available values as an array.
@@ -20,8 +21,9 @@ enum ProjectStatus: string {
 	public function label(): string {
 		return match($this) {
 			self::ACTIVE => 'Active',
-			self::ARCHIVED => 'Archived',
 			self::ON_HOLD => 'On Hold',
+			self::COMPLETED => 'Completed',
+			self::ARCHIVED => 'Archived',
 		};
 	}
 
@@ -31,8 +33,9 @@ enum ProjectStatus: string {
 	public function colour(): string {
 		return match($this) {
 			self::ACTIVE => 'success',
-			self::ARCHIVED => 'gray',
 			self::ON_HOLD => 'warning',
+			self::COMPLETED => 'info',
+			self::ARCHIVED => 'gray',
 		};
 	}
 }
