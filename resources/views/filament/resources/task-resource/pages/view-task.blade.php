@@ -88,15 +88,17 @@
         {{-- Main Content --}}
         <div class="flex-1 min-w-0 space-y-6">
             {{-- Breadcrumb --}}
+            @if($this->record->project)
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <a href="{{ route('filament.admin.resources.projects.view', $this->record->project_id) }}" class="text-primary-600 hover:underline dark:text-primary-400">
-                    {{ $this->record->project?->name }}
+                    {{ $this->record->project->name }}
                 </a>
                 @if($this->record->sprint)
                     <span>/</span>
                     <span>{{ $this->record->sprint->name }}</span>
                 @endif
             </div>
+            @endif
 
             {{-- Description Section --}}
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">

@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider {
 			->default()
 			->id('admin')
 			->path('admin')
+			->favicon(asset('/images/pms-favicon-nobg-48x48-cropped.png'))
 			->login()
 			->passwordReset()
 			->emailVerification()

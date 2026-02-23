@@ -38,7 +38,7 @@ class TaskResource extends Resource
                             ->relationship('project', 'name')
                             ->searchable()
                             ->preload()
-                            ->required()
+                            ->label('Project (optional)')
                             ->live()
                             ->afterStateUpdated(function (Forms\Set $set) {
                                 $set('sprint_id', null);

@@ -241,6 +241,8 @@ class Task extends Model implements HasMedia {
 	}
 
 	public function getIdentifierAttribute(): string {
-		return strtoupper($this->project->key) . '-' . $this->id;
+		return $this->project
+			? strtoupper($this->project->key) . '-' . $this->id
+			: 'TASK-' . $this->id;
 	}
 }

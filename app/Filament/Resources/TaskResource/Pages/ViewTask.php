@@ -7,6 +7,7 @@ use App\Enums\TaskType;
 use App\Filament\Resources\TaskResource;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Workflow;
 use App\Services\PresenceService;
 use Filament\Actions;
 use Filament\Forms\Components\DateTimePicker;
@@ -119,7 +120,7 @@ class ViewTask extends Page implements HasForms
         return $form
             ->schema([
                 Select::make('status')
-                    ->options(fn () => $this->record->project->getStatusOptions())
+                    ->options(fn () => $this->record?->project?->getStatusOptions() ?? Workflow::getDefault()?->getStatusOptions() ?? [])
                     ->native(false)
                     ->live()
                     ->afterStateUpdated(fn () => $this->saveDetails()),

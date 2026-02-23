@@ -29,9 +29,10 @@ class TaskStatusChangedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $changedByText = $this->changedBy ? " by {$this->changedBy}" : '';
+        $greeting = ($this->task?->project?->name ? "{$this->task->project->name} → {$this->task->title}" : "{$this->task->title}");
 
         return (new MailMessage)
-        ->greeting("{$this->task->project->name} → {$this->task->title}")
+        ->greeting("{$greeting}")
             ->subject('Task Status Updated: ' . $this->task->title)
             ->line("A task's status has been updated{$changedByText}.")
             ->line("**{$this->task->title}**")

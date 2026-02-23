@@ -27,9 +27,10 @@ class TaskAssignedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $assignedByText = $this->assignedBy ? " by {$this->assignedBy}" : '';
+        $greeting = ($this->task?->project?->name ? "{$this->task->project->name} → {$this->task->title}" : "{$this->task->title}");
 
         return (new MailMessage)
-            ->greeting("{$this->task->project->name} → {$this->task->title}")
+            ->greeting("{$greeting}")
             ->subject('Task Assigned: ' . $this->task->title)
             ->line("You have been assigned to a task{$assignedByText}.")
             ->line("Task: **{$this->task->title}**")

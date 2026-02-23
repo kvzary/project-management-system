@@ -27,8 +27,10 @@ class TaskCommentedNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $greeting = ($this->task?->project?->name ? "{$this->task->project->name} → {$this->task->title}" : "{$this->task->title}");
+
         return (new MailMessage)
-            ->greeting("{$this->task->project->name} → {$this->task->title}")
+            ->greeting("{$greeting}")
             ->subject('New Comment on: ' . $this->task->title)
             ->line("{$this->comment->user->name} commented on a task you are involved in.")
             ->line("**{$this->task->title}**")
