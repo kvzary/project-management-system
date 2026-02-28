@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Comment;
 use App\Models\Project;
+use App\Services\MentionParser;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
@@ -40,9 +40,25 @@ class ProjectActivityFeed extends Component
         $this->dispatch('comment-added');
     }
 
+    public function addCommentWithBody(string $body): void
+    {
+        $body = trim($body);
+
+        if (mb_strlen($body) < 1) {
+            return;
+        }
+
+        $this->project->comments()->create([
+            'user_id' => auth()->id(),
+            'body' => $body,
+        ]);
+
+        $this->dispatch('comment-added');
+    }
+
     public function deleteComment(int $commentId): void
     {
-        $comment = Comment::find($commentId);
+        $comment = $this->project->comments()->find($commentId);
 
         if ($comment && $comment->user_id === auth()->id()) {
             $comment->delete();
@@ -60,7 +76,7 @@ class ProjectActivityFeed extends Component
                     'type' => 'comment',
                     'id' => $comment->id,
                     'user' => $comment->user,
-                    'content' => $comment->body,
+                    'content' => MentionParser::render($comment->body),
                     'created_at' => $comment->created_at,
                     'can_delete' => $comment->user_id === auth()->id(),
                 ];
