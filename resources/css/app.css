@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Tribute.js mention dropdown ─────────────────────────────────────── */
+.tribute-container {
+    @apply z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden min-w-[180px] max-w-[280px];
+}
+
+.tribute-container ul {
+    @apply list-none m-0 p-1;
+}
+
+.tribute-container li {
+    @apply px-3 py-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer rounded-md flex items-center gap-2;
+}
+
+.tribute-container li.highlight,
+.tribute-container li:hover {
+    @apply bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300;
+}
+
+.tribute-item-name {
+    @apply font-medium;
+}
+
+.tribute-no-match {
+    @apply px-3 py-2 text-sm text-gray-400 italic;
+}
+
+/* ── Rendered mention chip ────────────────────────────────────────────── */
+.mention {
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium
+           bg-primary-100 dark:bg-primary-900/40
+           text-primary-700 dark:text-primary-300;
+}
+
 @media (max-width: 767px) {
     /* Prevent horizontal scroll on table container */
     .fi-ta-ctn,

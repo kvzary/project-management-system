@@ -12,8 +12,8 @@
                     <textarea
                         wire:model="newComment"
                         rows="2"
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 resize-none"
-                        placeholder="Add a comment..."
+                        class="mention-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 resize-none"
+                        placeholder="Add a comment... (type @ to mention someone)"
                     ></textarea>
                     @error('newComment')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -84,7 +84,7 @@
                         @if($item['type'] === 'comment')
                             {{-- Comment Content --}}
                             <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
-                                {!! $item['content'] !!}
+                                {{ $item['content'] }}
                             </div>
                         @else
                             {{-- Activity Changes --}}
