@@ -40,6 +40,22 @@ class TaskActivityFeed extends Component
         $this->dispatch('comment-added');
     }
 
+    public function addCommentWithBody(string $body): void
+    {
+        $body = trim($body);
+
+        if (mb_strlen($body) < 1) {
+            return;
+        }
+
+        $this->task->comments()->create([
+            'user_id' => auth()->id(),
+            'body' => $body,
+        ]);
+
+        $this->dispatch('comment-added');
+    }
+
     public function deleteComment(int $commentId): void
     {
         $comment = $this->task->comments()->find($commentId);

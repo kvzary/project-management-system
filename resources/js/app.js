@@ -33,26 +33,22 @@ function initMentions() {
                 span.textContent = item.original.name;
                 return span.outerHTML;
             },
-            selectTemplate: item =>
-                `@[${item.original.name}](user:${item.original.id})`,
+            selectTemplate: item => {
+                // Store mapping so Alpine can tokenize on submit
+                el._mentionMap = el._mentionMap || {};
+                el._mentionMap[item.original.name] = item.original.id;
+                // Show only @Name in the textarea
+                return '@' + item.original.name;
+            },
             noMatchTemplate: () => '<span class="tribute-no-match">No users found</span>',
         });
 
         tribute.attach(el);
-
-        // Sync Tribute's DOM insertion back to Livewire immediately via $set
-        el.addEventListener('tribute-replaced', () => {
-            const wireEl = el.closest('[wire\\:id]');
-            if (wireEl) {
-                Livewire.find(wireEl.getAttribute('wire:id')).$set('newComment', el.value);
-            }
-            // Fallback: synthetic input event for other listeners
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-        });
     });
 }
 
 document.addEventListener('DOMContentLoaded', initMentions);
+document.addEventListener('livewire:initialized', initMentions);
 document.addEventListener('livewire:navigated', initMentions);
 document.addEventListener('livewire:update', () => setTimeout(initMentions, 150));
 

@@ -1,7 +1,33 @@
 <div class="space-y-4" wire:poll.5s="refreshFeed">
     {{-- Add Comment Form --}}
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-        <form wire:submit="addComment">
+    <div
+        class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+        x-data="{
+            submitting: false,
+            submit() {
+                const ta = this.$refs.commentInput;
+                let body = ta.value.trim();
+                if (!body) return;
+
+                // Convert @Name display format → @[Name](user:ID) storage tokens
+                const map = ta._mentionMap || {};
+                const names = Object.keys(map).sort((a, b) => b.length - a.length);
+                if (names.length > 0) {
+                    const escaped = names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                    const pattern = new RegExp('@(' + escaped.join('|') + ')(?=[\\s,;.!?]|$)', 'g');
+                    body = body.replace(pattern, (_, name) => map[name] ? '@[' + name + '](user:' + map[name] + ')' : '@' + name);
+                }
+
+                this.submitting = true;
+                $wire.addCommentWithBody(body).then(() => {
+                    ta.value = '';
+                    ta._mentionMap = {};
+                    this.submitting = false;
+                });
+            }
+        }"
+    >
+        <form @submit.prevent="submit">
             <div class="flex gap-3">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
@@ -10,24 +36,21 @@
                 </div>
                 <div class="flex-1">
                     <textarea
-                        wire:model="newComment"
+                        x-ref="commentInput"
                         rows="2"
                         class="mention-input w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 resize-none"
                         placeholder="Add a comment... (type @ to mention someone)"
                     ></textarea>
-                    @error('newComment')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
             <div class="flex justify-end mt-2">
                 <button
                     type="submit"
                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
-                    wire:loading.attr="disabled"
+                    :disabled="submitting"
                 >
-                    <span wire:loading.remove wire:target="addComment">Comment</span>
-                    <span wire:loading wire:target="addComment">Posting...</span>
+                    <span x-show="!submitting">Comment</span>
+                    <span x-show="submitting">Posting...</span>
                 </button>
             </div>
         </form>
