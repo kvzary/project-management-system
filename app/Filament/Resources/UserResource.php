@@ -79,6 +79,8 @@ class UserResource extends Resource
                     ->modalDescription(fn(User $record) => 'Send a password setup link to ' . $record->email . '?')
                     ->modalSubmitActionLabel('Send')
                     ->action(function (User $record) {
+                        $record->markEmailAsVerified();
+
                         $status = Password::sendResetLink(['email' => $record->email]);
 
                         if ($status === Password::RESET_LINK_SENT) {
