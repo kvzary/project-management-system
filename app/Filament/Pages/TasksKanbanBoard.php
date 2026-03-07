@@ -104,9 +104,15 @@ class TasksKanbanBoard extends KanbanBoard
                 ->icon('heroicon-o-plus')
                 ->form($this->getCreateTaskFormSchema())
                 ->action(function (array $data): void {
+                    $assignees = $data['assignees'] ?? [];
+                    unset($data['assignees']);
                     $data['reporter_id'] = auth()->id();
+                    $data['assigned_to'] = $assignees[0] ?? null;
                     $data['position'] = Task::where('status', $data['status'] ?? 'todo')->max('position') + 1;
-                    Task::create($data);
+                    $task = Task::create($data);
+                    if (! empty($assignees)) {
+                        $task->assignees()->sync($assignees);
+                    }
                     $this->dispatch('kanban-refresh');
                 }),
         ];
@@ -154,11 +160,11 @@ class TasksKanbanBoard extends KanbanBoard
                 ->default(TaskPriority::MEDIUM)
                 ->required()
                 ->native(false),
-            Select::make('assigned_to')
-                ->label('Assignee')
+            Select::make('assignees')
+                ->label('Assignees')
+                ->multiple()
                 ->options(User::pluck('name', 'id'))
-                ->searchable()
-                ->preload(),
+                ->searchable(),
             TextInput::make('story_points')
                 ->numeric()
                 ->minValue(0)
@@ -221,7 +227,7 @@ class TasksKanbanBoard extends KanbanBoard
     protected function records(): Collection
     {
         $query = Task::query()
-            ->with(['project.workflow.statuses', 'assignee', 'sprint'])
+            ->with(['project.workflow.statuses', 'assignee', 'assignees', 'sprint'])
             ->whereNull('deleted_at');
 
         if ($this->departmentFilter) {
@@ -321,10 +327,11 @@ class TasksKanbanBoard extends KanbanBoard
                         )
                         ->searchable()
                         ->preload(),
-                    Select::make('assigned_to')
-                        ->relationship('assignee', 'name')
-                        ->searchable()
-                        ->preload(),
+                    Select::make('assignees')
+                        ->label('Assignees')
+                        ->multiple()
+                        ->options(User::pluck('name', 'id'))
+                        ->searchable(),
                     DateTimePicker::make('due_date')
                         ->native(false),
                 ])->columns(2),
@@ -333,7 +340,16 @@ class TasksKanbanBoard extends KanbanBoard
 
     protected function editRecord(int|string $recordId, array $data, array $state): void
     {
-        Task::find($recordId)->update($data);
+        $task = Task::find($recordId);
+        $assignees = $data['assignees'] ?? null;
+        unset($data['assignees']);
+
+        if ($assignees !== null) {
+            $data['assigned_to'] = $assignees[0] ?? null;
+            $task->assignees()->sync($assignees);
+        }
+
+        $task->update($data);
     }
 
     public function deleteRecord(int|string $recordId): void
@@ -351,6 +367,15 @@ class TasksKanbanBoard extends KanbanBoard
         }
 
         return 'Edit Task';
+    }
+
+    protected function getEditModalRecordData(int|string $recordId, array $data): array
+    {
+        $task = Task::with('assignees')->find($recordId);
+        $taskData = $task->toArray();
+        $taskData['assignees'] = $task->assignees->pluck('id')->toArray();
+
+        return $taskData;
     }
 
     protected function additionalRecordData(\Illuminate\Database\Eloquent\Model $record): Collection

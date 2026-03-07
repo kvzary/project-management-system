@@ -76,11 +76,11 @@ class ViewSprint extends Page implements HasTable
                         ->default(TaskPriority::MEDIUM)
                         ->required()
                         ->native(false),
-                    Select::make('assigned_to')
-                        ->label('Assignee')
+                    Select::make('assignees')
+                        ->label('Assignees')
+                        ->multiple()
                         ->options(User::orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->preload(),
+                        ->searchable(),
                     TextInput::make('story_points')
                         ->numeric()
                         ->minValue(0)
@@ -89,12 +89,18 @@ class ViewSprint extends Page implements HasTable
                         ->native(false),
                 ])
                 ->action(function (array $data): void {
-                    Task::create(array_merge($data, [
+                    $assignees = $data['assignees'] ?? [];
+                    unset($data['assignees']);
+                    $task = Task::create(array_merge($data, [
                         'sprint_id' => $this->record->id,
                         'project_id' => $this->record->project_id,
                         'reporter_id' => auth()->id(),
+                        'assigned_to' => $assignees[0] ?? null,
                         'status' => 'todo',
                     ]));
+                    if (! empty($assignees)) {
+                        $task->assignees()->sync($assignees);
+                    }
                 })
                 ->slideOver(),
 

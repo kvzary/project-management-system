@@ -97,6 +97,18 @@ class Task extends Model implements HasMedia {
 		return $this->belongsTo(User::class, 'assigned_to');
 	}
 
+	public function assignees(): BelongsToMany {
+		return $this->belongsToMany(User::class, 'task_assignees')->withTimestamps();
+	}
+
+	/**
+	 * Sync the assignees pivot and keep assigned_to pointing at the first assignee.
+	 */
+	public function syncAssignees(array $userIds): void {
+		$this->assignees()->sync($userIds);
+		$this->updateQuietly(['assigned_to' => $userIds[0] ?? null]);
+	}
+
 	public function reporter(): BelongsTo {
 		return $this->belongsTo(User::class, 'reporter_id');
 	}

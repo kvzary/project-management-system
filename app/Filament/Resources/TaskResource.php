@@ -113,11 +113,12 @@ class TaskResource extends Resource
                             ->preload()
                             ->required()
                             ->default(fn () => auth()->id()),
-                        Forms\Components\Select::make('assigned_to')
-                            ->relationship('assignee', 'name')
+                        Forms\Components\Select::make('assignees')
+                            ->relationship('assignees', 'name')
+                            ->multiple()
                             ->searchable()
                             ->preload()
-                            ->label('Assigned To'),
+                            ->label('Assignees'),
                         Forms\Components\DateTimePicker::make('due_date')
                             ->native(false)
                             ->displayFormat('Y-m-d H:i'),
@@ -189,10 +190,9 @@ class TaskResource extends Resource
                 Tables\Columns\TextColumn::make('priority')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assignee.name')
-                    ->sortable()
-                    ->searchable()
+                Tables\Columns\TextColumn::make('assignees_list')
                     ->label('Assigned To')
+                    ->getStateUsing(fn ($record) => $record->assignees->pluck('name')->join(', '))
                     ->placeholder('Unassigned'),
                 Tables\Columns\TextColumn::make('reporter.name')
                     ->sortable()
@@ -329,7 +329,7 @@ class TaskResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['project.workflow.statuses'])
+            ->with(['project.workflow.statuses', 'assignees'])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
 
         $user = auth()->user();
