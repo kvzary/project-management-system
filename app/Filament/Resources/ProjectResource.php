@@ -141,51 +141,72 @@ class ProjectResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ColorColumn::make('department.color')
-                    ->label('')
-                    ->tooltip(fn ($record) => $record->department?->name),
-                Tables\Columns\TextColumn::make('key')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color('primary'),
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('owner.name')
-                    ->sortable()
-                    ->searchable()
-                    ->label('Owner'),
-                Tables\Columns\TextColumn::make('tasks_count')
-                    ->counts('tasks')
-                    ->label('Tasks')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('sprints_count')
-                    ->counts('sprints')
-                    ->label('Sprints')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('members_count')
-                    ->counts('members')
-                    ->label('Members')
-                    ->icon('heroicon-o-users')
-                    ->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    // Top row: key badge + status badge
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('key')
+                            ->badge()
+                            ->color('primary')
+                            ->searchable()
+                            ->grow(false),
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->sortable()
+                            ->alignEnd(),
+                    ]),
+
+                    // Project name
+                    Tables\Columns\TextColumn::make('name')
+                        ->weight('bold')
+                        ->searchable()
+                        ->size('sm'),
+
+                    // Description preview
+                    Tables\Columns\TextColumn::make('description')
+                        ->html()
+                        ->limit(90)
+                        ->color('gray')
+                        ->size('xs')
+                        ->lineClamp(2),
+
+                    // Department badge
+                    Tables\Columns\TextColumn::make('department.name')
+                        ->badge()
+                        ->color('info')
+                        ->size('xs'),
+
+                    // Footer: stats + owner
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\Layout\Stack::make([
+                            Tables\Columns\TextColumn::make('tasks_count')
+                                ->counts('tasks')
+                                ->icon('heroicon-o-clipboard-document-check')
+                                ->iconColor('gray')
+                                ->label('')
+                                ->color('gray')
+                                ->size('xs')
+                                ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'task' : 'tasks')),
+                            Tables\Columns\TextColumn::make('sprints_count')
+                                ->counts('sprints')
+                                ->icon('heroicon-o-arrow-path')
+                                ->iconColor('gray')
+                                ->label('')
+                                ->color('gray')
+                                ->size('xs')
+                                ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'sprint' : 'sprints')),
+                        ]),
+                        Tables\Columns\TextColumn::make('owner.name')
+                            ->icon('heroicon-o-user-circle')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->alignEnd(),
+                    ]),
+                ])->space(2),
+            ])
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
             ])
             ->filters([
                 Tables\Filters\Filter::make('hide_completed')

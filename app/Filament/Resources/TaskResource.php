@@ -164,65 +164,65 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('type')
-                    ->badge()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('title')
-                    ->searchable()
-                    ->sortable()
-                    ->limit(50)
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('project.name')
-                    ->sortable()
-                    ->searchable()
-                    ->badge()
-                    ->color('primary'),
-                Tables\Columns\TextColumn::make('sprint.name')
-                    ->sortable()
-                    ->searchable()
-                    ->toggleable()
-                    ->placeholder('No sprint'),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->sortable()
-                    ->formatStateUsing(fn ($record) => $record->status_label)
-                    ->color(fn ($record) => $record->status_color),
-                Tables\Columns\TextColumn::make('priority')
-                    ->badge()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('assignees_list')
-                    ->label('Assigned To')
-                    ->getStateUsing(fn ($record) => $record->assignees->pluck('name')->join(', '))
-                    ->placeholder('Unassigned'),
-                Tables\Columns\TextColumn::make('reporter.name')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('story_points')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable()
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('due_date')
-                    ->date()
-                    ->sortable()
-                    ->toggleable()
-                    ->color(fn ($record) => $record->due_date && $record->due_date < now() && ! $record->isCompleted() ? 'danger' : null),
-                Tables\Columns\TextColumn::make('watchers_count')
-                    ->counts('watchers')
-                    ->label('Watchers')
-                    ->icon('heroicon-o-eye')
-                    ->alignCenter()
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    // Row 1: type icon | title | project | status
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('type')
+                            ->formatStateUsing(fn () => '')
+                            ->icon(fn ($state) => match ($state?->value) {
+                                'bug'     => 'heroicon-o-bug-ant',
+                                'story'   => 'heroicon-o-bookmark',
+                                'epic'    => 'heroicon-o-bolt',
+                                'subtask' => 'heroicon-o-minus',
+                                default   => 'heroicon-o-check-circle',
+                            })
+                            ->iconColor(fn ($state) => match ($state?->value) {
+                                'bug'     => 'danger',
+                                'story'   => 'success',
+                                'epic'    => 'warning',
+                                'subtask' => 'info',
+                                default   => 'primary',
+                            })
+                            ->grow(false),
+                        Tables\Columns\TextColumn::make('title')
+                            ->searchable()
+                            ->weight('medium'),
+                        Tables\Columns\TextColumn::make('project.key')
+                            ->badge()
+                            ->color('primary')
+                            ->searchable()
+                            ->grow(false),
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->formatStateUsing(fn ($record) => $record->status_label)
+                            ->color(fn ($record) => $record->status_color)
+                            ->grow(false),
+                    ]),
+
+                    // Row 2: priority | first assignee | due date
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('priority')
+                            ->badge()
+                            ->grow(false),
+                        Tables\Columns\TextColumn::make('assignee_name')
+                            ->getStateUsing(fn ($record) => $record->assignees->first()?->name)
+                            ->placeholder('Unassigned')
+                            ->icon('heroicon-o-user')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs'),
+                        Tables\Columns\TextColumn::make('due_date')
+                            ->date('M d')
+                            ->placeholder('—')
+                            ->icon('heroicon-o-calendar')
+                            ->iconColor('gray')
+                            ->color(fn ($record) => $record->due_date?->isPast() && ! $record->isCompleted() ? 'danger' : 'gray')
+                            ->size('xs')
+                            ->grow(false),
+                    ]),
+                ])->space(1),
             ])
+            ->contentGrid(['sm' => 1, 'md' => 1])
             ->filters([
                 Tables\Filters\Filter::make('hide_done')
                     ->label('Hide Done')
