@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
+use App\Models\Department;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Task;
@@ -46,6 +47,9 @@ class TasksKanbanBoard extends KanbanBoard
     protected string $editModalWidth = '3xl';
 
     protected bool $editModalSlideOver = true;
+
+    #[Url]
+    public ?int $departmentFilter = null;
 
     #[Url]
     public ?int $projectFilter = null;
@@ -139,6 +143,7 @@ class TasksKanbanBoard extends KanbanBoard
                             return $project->getStatusOptions();
                         }
                     }
+
                     return $this->getActiveWorkflow()->getStatusOptions();
                 })
                 ->default('todo')
@@ -165,11 +170,33 @@ class TasksKanbanBoard extends KanbanBoard
 
     public function filtersForm(Form $form): Form
     {
+        $user = auth()->user();
+        $departmentOptions = $user->isSystemAdmin()
+            ? Department::orderBy('name')->pluck('name', 'id')
+            : $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+
         return $form
             ->schema([
+                Select::make('departmentFilter')
+                    ->label('Department')
+                    ->options($departmentOptions)
+                    ->placeholder('All Departments')
+                    ->searchable()
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->projectFilter = null),
                 Select::make('projectFilter')
                     ->label('Project')
-                    ->options(Project::pluck('name', 'id'))
+                    ->options(function (Get $get) use ($user) {
+                        $query = Project::query();
+                        if ($get('departmentFilter')) {
+                            $query->where('department_id', $get('departmentFilter'));
+                        } elseif (! $user->isSystemAdmin()) {
+                            $deptIds = $user->departments()->pluck('departments.id');
+                            $query->whereIn('department_id', $deptIds);
+                        }
+
+                        return $query->pluck('name', 'id');
+                    })
                     ->placeholder('All Projects')
                     ->searchable()
                     ->live(),
@@ -188,7 +215,7 @@ class TasksKanbanBoard extends KanbanBoard
                     ->searchable()
                     ->live(),
             ])
-            ->columns(3);
+            ->columns(4);
     }
 
     protected function records(): Collection
@@ -196,6 +223,10 @@ class TasksKanbanBoard extends KanbanBoard
         $query = Task::query()
             ->with(['project.workflow.statuses', 'assignee', 'sprint'])
             ->whereNull('deleted_at');
+
+        if ($this->departmentFilter) {
+            $query->whereHas('project', fn ($pq) => $pq->where('department_id', $this->departmentFilter));
+        }
 
         if ($this->projectFilter) {
             $query->where('project_id', $this->projectFilter);
@@ -258,6 +289,7 @@ class TasksKanbanBoard extends KanbanBoard
                             if ($task?->project) {
                                 return $task->project->getStatusOptions();
                             }
+
                             return $this->getActiveWorkflow()->getStatusOptions();
                         })
                         ->required()
@@ -314,6 +346,7 @@ class TasksKanbanBoard extends KanbanBoard
     {
         if ($this->editModalRecordId) {
             $task = Task::find($this->editModalRecordId);
+
             return $task?->title ?? 'Edit Task';
         }
 

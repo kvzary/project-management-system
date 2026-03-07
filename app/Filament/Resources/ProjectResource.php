@@ -192,6 +192,18 @@ class ProjectResource extends Resource
                     ->label('Hide Completed')
                     ->query(fn (Builder $query) => $query->whereNotIn('status', [ProjectStatus::COMPLETED->value]))
                     ->default(true),
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->label('Department')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user->isSystemAdmin()) {
+                            return Department::orderBy('name')->pluck('name', 'id');
+                        }
+
+                        return $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+                    })
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(ProjectStatus::class),
                 Tables\Filters\SelectFilter::make('owner')
