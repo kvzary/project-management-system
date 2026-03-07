@@ -21,6 +21,8 @@ class CommentResource extends Resource
 
     protected static ?string $navigationGroup = 'Project Management';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
