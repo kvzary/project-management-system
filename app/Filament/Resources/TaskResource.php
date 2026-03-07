@@ -6,6 +6,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Filament\Resources\TaskResource\Pages;
+use App\Models\Department;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Workflow;
@@ -227,6 +228,21 @@ class TaskResource extends Resource
                     ->label('Hide Done')
                     ->query(fn (Builder $query) => $query->whereNotIn('status', [TaskStatus::DONE->value]))
                     ->default(true),
+                Tables\Filters\SelectFilter::make('department')
+                    ->label('Department')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user->isSystemAdmin()) {
+                            return Department::orderBy('name')->pluck('name', 'id');
+                        }
+
+                        return $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+                    })
+                    ->query(fn (Builder $query, array $data) => $data['value']
+                        ? $query->whereHas('project', fn ($pq) => $pq->where('department_id', $data['value']))
+                        : $query)
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('project')
                     ->relationship('project', 'name')
                     ->searchable()

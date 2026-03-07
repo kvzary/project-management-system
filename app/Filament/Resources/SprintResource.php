@@ -4,12 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Enums\SprintStatus;
 use App\Filament\Resources\SprintResource\Pages;
+use App\Models\Department;
 use App\Models\Sprint;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SprintResource extends Resource
 {
@@ -107,6 +109,21 @@ class SprintResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('department')
+                    ->label('Department')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user->isSystemAdmin()) {
+                            return Department::orderBy('name')->pluck('name', 'id');
+                        }
+
+                        return $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+                    })
+                    ->query(fn (Builder $query, array $data) => $data['value']
+                        ? $query->whereHas('project', fn ($pq) => $pq->where('department_id', $data['value']))
+                        : $query)
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('project')
                     ->relationship('project', 'name')
                     ->searchable()

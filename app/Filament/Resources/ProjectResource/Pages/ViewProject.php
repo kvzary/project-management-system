@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource;
+use App\Models\Department;
 use App\Models\User;
 use App\Services\PresenceService;
 use Filament\Actions;
@@ -39,6 +40,7 @@ class ViewProject extends Page implements HasForms
         $this->trackPresence();
 
         $this->detailsForm->fill([
+            'department_id' => $this->record->department_id,
             'status' => $this->record->status,
             'owner_id' => $this->record->owner_id,
             'product_manager_id' => $this->record->product_manager_id,
@@ -109,6 +111,20 @@ class ViewProject extends Page implements HasForms
     {
         return $form
             ->schema([
+                Select::make('department_id')
+                    ->label('Department')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user->isSystemAdmin()) {
+                            return Department::orderBy('name')->pluck('name', 'id');
+                        }
+
+                        return $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->saveDetails()),
                 Select::make('status')
                     ->options(ProjectStatus::class)
                     ->native(false)

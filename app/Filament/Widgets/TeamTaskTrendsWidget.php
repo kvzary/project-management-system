@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WorkflowStatus;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class TeamTaskTrendsWidget extends ChartWidget
 {
@@ -93,7 +94,7 @@ class TeamTaskTrendsWidget extends ChartWidget
 
         // Bulk-load all data in 3 aggregated queries instead of 52 × 3 × N individual queries.
         $completedByUserWeek = Task::query()
-            ->selectRaw('assigned_to, WEEK(updated_at, 1) as week, COUNT(*) as count')
+            ->selectRaw('assigned_to, '.$this->weekExpr('updated_at').' as week, COUNT(*) as count')
             ->whereIn('status', $completedSlugs)
             ->whereBetween('updated_at', [$start, $end])
             ->when($assigneeId, fn ($q) => $q->where('assigned_to', $assigneeId))
@@ -104,7 +105,7 @@ class TeamTaskTrendsWidget extends ChartWidget
             ->map(fn ($rows) => $rows->pluck('count', 'week'));
 
         $overdueByUserWeek = Task::query()
-            ->selectRaw('assigned_to, WEEK(due_date, 1) as week, COUNT(*) as count')
+            ->selectRaw('assigned_to, '.$this->weekExpr('due_date').' as week, COUNT(*) as count')
             ->whereNotIn('status', $completedSlugs)
             ->whereNotNull('due_date')
             ->whereBetween('due_date', [$start, $end])
@@ -116,7 +117,7 @@ class TeamTaskTrendsWidget extends ChartWidget
             ->map(fn ($rows) => $rows->pluck('count', 'week'));
 
         $activeByUserWeek = Task::query()
-            ->selectRaw('assigned_to, WEEK(created_at, 1) as week, COUNT(*) as count')
+            ->selectRaw('assigned_to, '.$this->weekExpr('created_at').' as week, COUNT(*) as count')
             ->whereNotIn('status', $completedSlugs)
             ->whereBetween('created_at', [$start, $end])
             ->when($assigneeId, fn ($q) => $q->where('assigned_to', $assigneeId))
@@ -210,5 +211,12 @@ class TeamTaskTrendsWidget extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    private function weekExpr(string $column): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? "CAST(strftime('%W', {$column}) AS INTEGER)"
+            : "WEEK({$column}, 1)";
     }
 }
