@@ -141,7 +141,8 @@ class SprintResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('start_date', 'desc');
+            ->defaultSort('start_date', 'desc')
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]));
     }
 
     public static function getRelations(): array
@@ -156,6 +157,7 @@ class SprintResource extends Resource
         return [
             'index' => Pages\ListSprints::route('/'),
             'create' => Pages\CreateSprint::route('/create'),
+            'view' => Pages\ViewSprint::route('/{record}'),
             'edit' => Pages\EditSprint::route('/{record}/edit'),
         ];
     }
