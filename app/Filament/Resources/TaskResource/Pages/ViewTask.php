@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TaskResource\Pages;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
+use App\Filament\Resources\ProjectResource;
 use App\Filament\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Sprint;
@@ -105,6 +106,20 @@ class ViewTask extends Page implements HasForms
     public function getWatcherCount(): int
     {
         return $this->record->watchers()->count();
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        $crumbs = [];
+
+        if ($this->record->project_id && $this->record->project) {
+            $crumbs[ProjectResource::getUrl('view', ['record' => $this->record->project])] = $this->record->project->name;
+        }
+
+        $crumbs[TaskResource::getUrl('index')] = 'Tasks';
+        $crumbs[] = $this->record->title;
+
+        return $crumbs;
     }
 
     public function getTitle(): string|Htmlable
