@@ -79,37 +79,52 @@ class SprintResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('project.name')
-                    ->sortable()
-                    ->searchable()
-                    ->badge()
-                    ->color('primary'),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('start_date')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('end_date')
-                    ->date()
-                    ->sortable()
-                    ->color(fn ($record) => $record->end_date < now() && $record->status !== SprintStatus::COMPLETED ? 'danger' : null),
-                Tables\Columns\TextColumn::make('tasks_count')
-                    ->counts('tasks')
-                    ->label('Tasks')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    // Sprint name + status
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->searchable()
+                            ->weight('bold'),
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->sortable()
+                            ->alignEnd(),
+                    ]),
+
+                    // Project badge
+                    Tables\Columns\TextColumn::make('project.name')
+                        ->searchable()
+                        ->badge()
+                        ->color('primary'),
+
+                    // Dates + task count
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('start_date')
+                            ->date('M d, Y')
+                            ->color('gray')
+                            ->size('xs')
+                            ->icon('heroicon-o-calendar')
+                            ->iconColor('gray'),
+                        Tables\Columns\TextColumn::make('end_date')
+                            ->date('M d, Y')
+                            ->color(fn ($record) => $record->end_date < now() && $record->status !== SprintStatus::COMPLETED ? 'danger' : 'gray')
+                            ->size('xs')
+                            ->icon('heroicon-o-flag')
+                            ->iconColor('gray'),
+                        Tables\Columns\TextColumn::make('tasks_count')
+                            ->counts('tasks')
+                            ->icon('heroicon-o-clipboard-document-check')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'task' : 'tasks'))
+                            ->alignEnd(),
+                    ]),
+                ])->space(2),
+            ])
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('department')

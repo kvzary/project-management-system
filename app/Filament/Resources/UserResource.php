@@ -82,29 +82,49 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->badge()
-                    ->label('Roles'),
-                Tables\Columns\TextColumn::make('departments.name')
-                    ->badge()
-                    ->color('info')
-                    ->label('Departments')
-                    ->separator(','),
-                Tables\Columns\IconColumn::make('email_verified_at')
-                    ->boolean()
-                    ->label('Verified')
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    // Name + verified badge
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->searchable()
+                            ->sortable()
+                            ->weight('bold'),
+                        Tables\Columns\IconColumn::make('email_verified_at')
+                            ->boolean()
+                            ->label('')
+                            ->trueIcon('heroicon-o-check-badge')
+                            ->falseIcon('heroicon-o-x-circle')
+                            ->trueColor('success')
+                            ->falseColor('danger')
+                            ->tooltip(fn ($record) => $record->email_verified_at ? 'Verified' : 'Not verified')
+                            ->alignEnd()
+                            ->grow(false),
+                    ]),
+                    // Email
+                    Tables\Columns\TextColumn::make('email')
+                        ->searchable()
+                        ->color('gray')
+                        ->size('xs')
+                        ->icon('heroicon-o-envelope')
+                        ->iconColor('gray'),
+                    // Roles + departments
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('roles.name')
+                            ->badge()
+                            ->label(''),
+                        Tables\Columns\TextColumn::make('departments.name')
+                            ->badge()
+                            ->color('info')
+                            ->label('')
+                            ->separator(',')
+                            ->alignEnd(),
+                    ]),
+                ])->space(1),
+            ])
+            ->contentGrid([
+                'sm' => 1,
+                'md' => 2,
+                'xl' => 3,
             ])
             ->actions([
                 Tables\Actions\Action::make('sendInvite')

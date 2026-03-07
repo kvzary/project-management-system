@@ -45,31 +45,46 @@ class DepartmentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ColorColumn::make('color')
-                    ->label(''),
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('description')
-                    ->limit(60)
-                    ->placeholder('—'),
-                Tables\Columns\TextColumn::make('members_count')
-                    ->counts('members')
-                    ->label('Members')
-                    ->icon('heroicon-o-users')
-                    ->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('projects_count')
-                    ->counts('projects')
-                    ->label('Projects')
-                    ->icon('heroicon-o-briefcase')
-                    ->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\ColorColumn::make('color')
+                            ->label('')
+                            ->grow(false),
+                        Tables\Columns\TextColumn::make('name')
+                            ->searchable()
+                            ->sortable()
+                            ->weight('bold'),
+                    ]),
+                    Tables\Columns\TextColumn::make('description')
+                        ->limit(80)
+                        ->placeholder('No description')
+                        ->color('gray')
+                        ->size('xs'),
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('members_count')
+                            ->counts('members')
+                            ->icon('heroicon-o-users')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->label('')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'member' : 'members')),
+                        Tables\Columns\TextColumn::make('projects_count')
+                            ->counts('projects')
+                            ->icon('heroicon-o-briefcase')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->label('')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'project' : 'projects'))
+                            ->alignEnd(),
+                    ]),
+                ])->space(2),
+            ])
+            ->contentGrid([
+                'sm' => 1,
+                'md' => 2,
+                'xl' => 3,
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

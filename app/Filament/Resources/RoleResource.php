@@ -64,19 +64,35 @@ class RoleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->counts('users')
-                    ->label('Users')
-                    ->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->searchable()
+                            ->sortable()
+                            ->weight('bold'),
+                        Tables\Columns\TextColumn::make('users_count')
+                            ->counts('users')
+                            ->badge()
+                            ->color('primary')
+                            ->label('')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'user' : 'users'))
+                            ->alignEnd()
+                            ->grow(false),
+                    ]),
+                    Tables\Columns\TextColumn::make('permissions_count')
+                        ->counts('permissions')
+                        ->icon('heroicon-o-shield-check')
+                        ->iconColor('gray')
+                        ->color('gray')
+                        ->size('xs')
+                        ->label('')
+                        ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'permission' : 'permissions')),
+                ])->space(2),
+            ])
+            ->contentGrid([
+                'sm' => 1,
+                'md' => 2,
+                'xl' => 3,
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

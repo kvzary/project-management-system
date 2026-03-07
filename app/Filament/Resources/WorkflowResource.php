@@ -85,26 +85,52 @@ class WorkflowResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('description')
-                    ->limit(50)
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_default')
-                    ->boolean()
-                    ->label('Default'),
-                Tables\Columns\TextColumn::make('statuses_count')
-                    ->counts('statuses')
-                    ->label('Statuses'),
-                Tables\Columns\TextColumn::make('projects_count')
-                    ->counts('projects')
-                    ->label('Projects'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->searchable()
+                            ->sortable()
+                            ->weight('bold'),
+                        Tables\Columns\IconColumn::make('is_default')
+                            ->boolean()
+                            ->label('')
+                            ->trueIcon('heroicon-o-check-badge')
+                            ->falseIcon('')
+                            ->trueColor('success')
+                            ->tooltip('Default workflow')
+                            ->alignEnd()
+                            ->grow(false),
+                    ]),
+                    Tables\Columns\TextColumn::make('description')
+                        ->limit(80)
+                        ->placeholder('No description')
+                        ->color('gray')
+                        ->size('xs'),
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('statuses_count')
+                            ->counts('statuses')
+                            ->icon('heroicon-o-tag')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->label('')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'status' : 'statuses')),
+                        Tables\Columns\TextColumn::make('projects_count')
+                            ->counts('projects')
+                            ->icon('heroicon-o-briefcase')
+                            ->iconColor('gray')
+                            ->color('gray')
+                            ->size('xs')
+                            ->label('')
+                            ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'project' : 'projects'))
+                            ->alignEnd(),
+                    ]),
+                ])->space(2),
+            ])
+            ->contentGrid([
+                'sm' => 1,
+                'md' => 2,
+                'xl' => 3,
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
