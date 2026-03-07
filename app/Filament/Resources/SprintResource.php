@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\SprintStatus;
+use App\Filament\Resources\Concerns\HasResourcePermissions;
 use App\Filament\Resources\SprintResource\Pages;
 use App\Models\Department;
 use App\Models\Sprint;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SprintResource extends Resource
 {
+    use HasResourcePermissions;
+
     protected static ?string $model = Sprint::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';

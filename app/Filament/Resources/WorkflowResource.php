@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\HasResourcePermissions;
 use App\Filament\Resources\WorkflowResource\Pages;
 use App\Models\Workflow;
 use App\Models\WorkflowStatus;
@@ -14,6 +15,8 @@ use Illuminate\Support\Str;
 
 class WorkflowResource extends Resource
 {
+    use HasResourcePermissions;
+
     protected static ?string $model = Workflow::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
