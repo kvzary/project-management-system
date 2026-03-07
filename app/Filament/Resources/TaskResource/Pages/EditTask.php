@@ -18,6 +18,8 @@ class EditTask extends EditRecord
 {
     protected static string $resource = TaskResource::class;
 
+    protected array $assigneeIdsBeforeSave = [];
+
     public function mount(int|string $record): void
     {
         parent::mount($record);
@@ -37,10 +39,18 @@ class EditTask extends EditRecord
         $this->trackPresence();
     }
 
+    protected function beforeSave(): void
+    {
+        $this->assigneeIdsBeforeSave = $this->record->assignees()->pluck('users.id')->toArray();
+    }
+
     protected function afterSave(): void
     {
         $firstAssignee = $this->record->assignees()->first();
         $this->record->updateQuietly(['assigned_to' => $firstAssignee?->id]);
+
+        $newIds = $this->record->assignees()->pluck('users.id')->toArray();
+        $this->record->notifyNewAssignees($this->assigneeIdsBeforeSave, $newIds);
     }
 
     public function dehydrate(): void
