@@ -15,4 +15,21 @@ class CreateRole extends CreateRecord
 
         return $data;
     }
+
+    protected function afterCreate(): void
+    {
+        $this->syncPermissions();
+    }
+
+    private function syncPermissions(): void
+    {
+        $permissions = collect($this->data)
+            ->filter(fn ($v, $k) => str_starts_with($k, 'perms_'))
+            ->flatten()
+            ->filter()
+            ->values()
+            ->toArray();
+
+        $this->record->syncPermissions($permissions);
+    }
 }

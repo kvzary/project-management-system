@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RoleResource\Pages;
+use App\Support\AppPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -24,22 +25,38 @@ class RoleResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $permissionSections = [];
+        foreach (AppPermissions::RESOURCES as $key => $label) {
+            $permissionSections[] = Forms\Components\Fieldset::make($label)
+                ->schema([
+                    Forms\Components\CheckboxList::make("perms_{$key}")
+                        ->hiddenLabel()
+                        ->options(AppPermissions::optionsFor($key))
+                        ->columns(4)
+                        ->gridDirection('row'),
+                ]);
+        }
+
         return $form
             ->schema([
-                Forms\Components\Section::make()
+                Forms\Components\Section::make('Role')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Used in code to check permissions, e.g. hasRole(\'manager\'). Use lowercase with underscores.'),
+                            ->helperText('Lowercase with underscores, e.g. project_manager'),
                         Forms\Components\Select::make('users')
                             ->multiple()
                             ->relationship('users', 'name')
                             ->searchable()
                             ->preload()
                             ->label('Users with this role'),
-                    ])->columns(1),
+                    ])->columns(2),
+                Forms\Components\Section::make('Permissions')
+                    ->description('Choose what users with this role can do across each service.')
+                    ->schema($permissionSections)
+                    ->columns(1),
             ]);
     }
 
