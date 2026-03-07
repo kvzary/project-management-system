@@ -5,6 +5,8 @@ namespace App\Filament\Resources\TaskResource\Pages;
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
 use App\Filament\Resources\TaskResource;
+use App\Models\Project;
+use App\Models\Sprint;
 use App\Models\User;
 use App\Models\Workflow;
 use App\Services\PresenceService;
@@ -17,6 +19,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -45,6 +49,8 @@ class ViewTask extends Page implements HasForms
         $this->trackPresence();
 
         $this->detailsForm->fill([
+            'project_id' => $this->record->project_id,
+            'sprint_id' => $this->record->sprint_id,
             'status' => $this->record->status,
             'priority' => $this->record->priority,
             'type' => $this->record->type,
@@ -122,6 +128,23 @@ class ViewTask extends Page implements HasForms
     {
         return $form
             ->schema([
+                Select::make('project_id')
+                    ->label('Project')
+                    ->options(Project::orderBy('name')->pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(function (Set $set) {
+                        $set('sprint_id', null);
+                        $this->saveDetails();
+                    }),
+                Select::make('sprint_id')
+                    ->label('Sprint')
+                    ->options(fn (Get $get) => Sprint::where('project_id', $get('project_id'))->orderBy('name')->pluck('name', 'id'))
+                    ->searchable()
+                    ->placeholder('No sprint')
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->saveDetails()),
                 Select::make('status')
                     ->options(fn () => $this->record?->project?->getStatusOptions() ?? Workflow::getDefault()?->getStatusOptions() ?? [])
                     ->native(false)
