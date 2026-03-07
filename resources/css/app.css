@@ -165,12 +165,28 @@
         flex-shrink: 0;
     }
 
+    /* Group headers span full width on mobile */
+    .fi-ta-group-header {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+    }
+
+    .fi-ta-group-header td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Hide the standalone select-all header row, keep per-card checkboxes */
+    .fi-ta-table thead tr:first-child th:first-child,
+    .fi-ta-header-cell:has(> .fi-ta-select-all-action) {
+        display: none !important;
+    }
+
     /* Hide bulk action checkbox column and empty cells on mobile */
     .fi-ta-table td:empty,
-    .fi-ta-table td.fi-ta-cell:has(.fi-ta-record-checkbox),
     .fi-ta-table td[class*="checkbox"],
-    .fi-ta-table th:first-child,
-    .fi-ta-table td:first-child:has(input[type="checkbox"]) {
+    .fi-ta-table th:first-child {
         display: none !important;
     }
 }

@@ -165,7 +165,7 @@ class TaskResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\Layout\Stack::make([
-                    // Row 1: type icon | title | project | status
+                    // Meta: type icon + identifier
                     Tables\Columns\Layout\Split::make([
                         Tables\Columns\TextColumn::make('type')
                             ->formatStateUsing(fn () => '')
@@ -184,26 +184,32 @@ class TaskResource extends Resource
                                 default   => 'primary',
                             })
                             ->grow(false),
-                        Tables\Columns\TextColumn::make('title')
-                            ->searchable()
-                            ->weight('medium'),
-                        Tables\Columns\TextColumn::make('project.key')
-                            ->badge()
-                            ->color('primary')
-                            ->searchable()
-                            ->grow(false),
+                        Tables\Columns\TextColumn::make('identifier')
+                            ->color('gray')
+                            ->size('xs'),
+                    ]),
+
+                    // Title
+                    Tables\Columns\TextColumn::make('title')
+                        ->searchable()
+                        ->weight('bold')
+                        ->lineClamp(2),
+
+                    // Status + priority
+                    Tables\Columns\Layout\Split::make([
                         Tables\Columns\TextColumn::make('status')
                             ->badge()
                             ->formatStateUsing(fn ($record) => $record->status_label)
                             ->color(fn ($record) => $record->status_color)
                             ->grow(false),
-                    ]),
-
-                    // Row 2: priority | first assignee | due date
-                    Tables\Columns\Layout\Split::make([
                         Tables\Columns\TextColumn::make('priority')
                             ->badge()
+                            ->alignEnd()
                             ->grow(false),
+                    ]),
+
+                    // Assignee + due date
+                    Tables\Columns\Layout\Split::make([
                         Tables\Columns\TextColumn::make('assignee_name')
                             ->getStateUsing(fn ($record) => $record->assignees->first()?->name)
                             ->placeholder('Unassigned')
@@ -218,11 +224,27 @@ class TaskResource extends Resource
                             ->iconColor('gray')
                             ->color(fn ($record) => $record->due_date?->isPast() && ! $record->isCompleted() ? 'danger' : 'gray')
                             ->size('xs')
+                            ->alignEnd()
                             ->grow(false),
                     ]),
-                ])->space(1),
+                ])->space(2),
             ])
-            ->contentGrid(['sm' => 1, 'md' => 1])
+            ->contentGrid(['sm' => 1, 'md' => 2, 'xl' => 3])
+            ->groups([
+                Tables\Grouping\Group::make('project_id')
+                    ->label('Project')
+                    ->collapsible()
+                    ->titlePrefixedWithLabel(false)
+                    ->getTitleFromRecordUsing(
+                        fn ($record) => $record->project
+                            ? $record->project->name.' ('.$record->project->key.')'
+                            : 'No Project'
+                    )
+                    ->orderQueryUsing(
+                        fn (Builder $query, string $direction) => $query->orderByRaw('project_id IS NULL')->orderBy('project_id', 'asc')->orderBy('created_at', 'desc')
+                    ),
+            ])
+            ->defaultGroup('project_id')
             ->filters([
                 Tables\Filters\Filter::make('hide_done')
                     ->label('Hide Done')
