@@ -11,6 +11,8 @@ use Illuminate\Support\Carbon;
 
 class TeamTaskTrendsWidget extends ChartWidget
 {
+    use HasDepartmentScope;
+
     protected static ?string $heading = 'Team Task Trends';
 
     protected static ?int $sort = 2;

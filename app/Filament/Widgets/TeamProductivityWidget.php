@@ -20,7 +20,7 @@ class TeamProductivityWidget extends BaseWidget
 
     protected static ?int $sort = 4;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
@@ -66,7 +66,7 @@ class TeamProductivityWidget extends BaseWidget
                 TextColumn::make('completion_rate')
                     ->label('Rate')
                     ->getStateUsing(fn ($record) => $record->total_tasks > 0
-                        ? round(($record->completed_tasks / $record->total_tasks) * 100) . '%'
+                        ? round(($record->completed_tasks / $record->total_tasks) * 100).'%'
                         : '0%')
                     ->alignCenter()
                     ->badge()
