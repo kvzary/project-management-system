@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\TaskPriority;
+use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\Task;
 use App\Models\WorkflowStatus;
 use Filament\Widgets\ChartWidget;
 
 class TasksByPriorityWidget extends ChartWidget
 {
+    use HasDepartmentScope;
+
     protected static ?string $heading = 'Open Tasks by Priority';
 
     protected static ?int $sort = 3;
@@ -16,8 +19,10 @@ class TasksByPriorityWidget extends ChartWidget
     protected function getData(): array
     {
         $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $departmentIds = $this->getDepartmentIds();
 
-        $counts = Task::whereNotIn('status', $completedSlugs)
+        $counts = $this->scopeTasksToDepartments(Task::query(), $departmentIds)
+            ->whereNotIn('status', $completedSlugs)
             ->selectRaw('priority, count(*) as total')
             ->groupBy('priority')
             ->pluck('total', 'priority');

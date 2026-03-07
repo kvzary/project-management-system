@@ -5,7 +5,6 @@ namespace App\Filament\Resources\TaskResource\Pages;
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
 use App\Filament\Resources\TaskResource;
-use App\Models\Task;
 use App\Models\User;
 use App\Models\Workflow;
 use App\Services\PresenceService;
@@ -33,8 +32,11 @@ class ViewTask extends Page implements HasForms
     protected static string $view = 'filament.resources.task-resource.pages.view-task';
 
     public ?array $detailsData = [];
+
     public ?array $descriptionData = [];
+
     public ?array $watchersData = [];
+
     public bool $isEditingDescription = false;
 
     public function mount(int|string $record): void
@@ -78,7 +80,7 @@ class ViewTask extends Page implements HasForms
     {
         $viewerIds = PresenceService::getViewerIds('task', $this->record->id);
         $currentUserId = auth()->id();
-        $viewerIds = array_filter($viewerIds, fn($id) => $id != $currentUserId);
+        $viewerIds = array_filter($viewerIds, fn ($id) => $id != $currentUserId);
 
         if (empty($viewerIds)) {
             return collect();
@@ -90,6 +92,7 @@ class ViewTask extends Page implements HasForms
     public function getViewerCount(): int
     {
         $count = PresenceService::getViewerCount('task', $this->record->id);
+
         return max(0, $count - 1);
     }
 
@@ -208,6 +211,8 @@ class ViewTask extends Page implements HasForms
 
     public function saveDetails(): void
     {
+        abort_unless(TaskResource::canEdit($this->record), 403);
+
         $data = $this->detailsForm->getState();
         $this->record->update($data);
 
@@ -239,6 +244,8 @@ class ViewTask extends Page implements HasForms
 
     public function saveDescription(): void
     {
+        abort_unless(TaskResource::canEdit($this->record), 403);
+
         $data = $this->descriptionForm->getState();
         $this->record->update($data);
         $this->isEditingDescription = false;

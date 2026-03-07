@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ProjectStatus;
+use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\Project;
 use App\Models\WorkflowStatus;
 use Filament\Tables\Columns\TextColumn;
@@ -12,20 +13,25 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ProjectProgressWidget extends BaseWidget
 {
+    use HasDepartmentScope;
+
     protected static ?string $heading = 'Project Progress';
 
     protected static ?int $sort = 5;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $departmentIds = $this->getDepartmentIds();
 
         return $table
             ->query(
-                Project::query()
-                    ->where('status', ProjectStatus::ACTIVE)
+                $this->scopeProjectsToDepartments(
+                    Project::query()->where('status', ProjectStatus::ACTIVE),
+                    $departmentIds
+                )
                     ->withCount([
                         'tasks as total_tasks',
                         'tasks as completed_tasks' => fn (Builder $q) => $q->whereIn('status', $completedSlugs),

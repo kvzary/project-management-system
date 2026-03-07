@@ -3,7 +3,9 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\TeamWorkMonitor;
+use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\User;
+use App\Models\WorkflowStatus;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -12,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TeamProductivityWidget extends BaseWidget
 {
+    use HasDepartmentScope;
+
     protected static ?string $heading = 'Team Productivity';
 
     protected static ?int $sort = 4;
@@ -20,18 +24,20 @@ class TeamProductivityWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
+        $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $departmentIds = $this->getDepartmentIds();
+
         return $table
             ->query(
                 User::query()
                     ->whereHas('assignedTasks')
+                    ->when(! empty($departmentIds), fn ($q) => $q->whereHas('departments', fn ($dq) => $dq->whereIn('departments.id', $departmentIds)))
                     ->withCount([
-                        'assignedTasks as total_tasks' => fn (Builder $q) => $q->whereNull('deleted_at'),
-                        'assignedTasks as completed_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')->whereIn('status', ['done', 'completed']),
-                        'assignedTasks as in_progress_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')->where('status', 'in_progress'),
-                        'assignedTasks as overdue_tasks' => fn (Builder $q) => $q->whereNull('deleted_at')
-                            ->whereNotNull('due_date')
+                        'assignedTasks as total_tasks',
+                        'assignedTasks as completed_tasks' => fn (Builder $q) => $q->whereIn('status', $completedSlugs),
+                        'assignedTasks as overdue_tasks' => fn (Builder $q) => $q->whereNotNull('due_date')
                             ->where('due_date', '<', now())
-                            ->whereNotIn('status', ['done', 'completed']),
+                            ->whereNotIn('status', $completedSlugs),
                     ])
             )
             ->columns([
@@ -51,12 +57,6 @@ class TeamProductivityWidget extends BaseWidget
                     ->alignCenter()
                     ->badge()
                     ->color('success'),
-                TextColumn::make('in_progress_tasks')
-                    ->label('In Progress')
-                    ->sortable()
-                    ->alignCenter()
-                    ->badge()
-                    ->color('info'),
                 TextColumn::make('overdue_tasks')
                     ->label('Overdue')
                     ->sortable()
