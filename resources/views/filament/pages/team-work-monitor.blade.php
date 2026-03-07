@@ -3,7 +3,7 @@
         {{-- Filters --}}
         <x-filament::section>
             <x-slot name="heading">Filter Options</x-slot>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-3 text-sm font-medium text-gray-950 dark:text-white mb-2">
                         Team Member
@@ -14,7 +14,21 @@
                     >
                         <option value="">All Team Members</option>
                         @foreach($this->getUsers() as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
+                            <option value="{{ $id }}" @selected($this->selectedUserId == $id)>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-3 text-sm font-medium text-gray-950 dark:text-white mb-2">
+                        Sprint
+                    </label>
+                    <select
+                        wire:model.live="sprintFilter"
+                        class="fi-select-input block w-full rounded-lg border-gray-300 shadow-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                        <option value="">All Sprints</option>
+                        @foreach($this->getSprints() as $id => $name)
+                            <option value="{{ $id }}" @selected($this->sprintFilter == $id)>{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -46,6 +60,7 @@
             $user = $this->getSelectedUser();
             $tasksByStatus = $this->getTasksByStatus();
             $weeklyProgress = $this->getWeeklyProgress();
+            $hasStoryPoints = $stats['total_story_points'] > 0;
         @endphp
 
         {{-- Selected User Header --}}
@@ -68,7 +83,13 @@
             </x-filament::section>
         @endif
 
-        {{-- Stats Grid --}}
+        {{-- Clickable Stats Grid --}}
+        @php
+            $activeCard = $this->statusCardFilter;
+            $cardBase = 'cursor-pointer rounded-xl transition ring-2 ';
+            $cardActive = 'ring-primary-500 bg-primary-50 dark:bg-primary-950';
+            $cardInactive = 'ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600';
+        @endphp
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             {{-- Total Tasks --}}
             <x-filament::section>
@@ -83,48 +104,63 @@
                 </div>
             </x-filament::section>
 
-            {{-- Completed --}}
-            <x-filament::section>
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-full bg-success-100 dark:bg-success-900">
-                        <x-heroicon-o-check-circle class="w-6 h-6 text-success-600 dark:text-success-400" />
+            {{-- Completed (clickable) --}}
+            <div
+                wire:click="setStatusCardFilter('_completed')"
+                class="{{ $cardBase }} {{ $activeCard === '_completed' ? $cardActive : $cardInactive }}"
+            >
+                <x-filament::section>
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-full bg-success-100 dark:bg-success-900">
+                            <x-heroicon-o-check-circle class="w-6 h-6 text-success-600 dark:text-success-400" />
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Completed {{ $activeCard === '_completed' ? '●' : '' }}</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['completed_tasks'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['completed_tasks'] }}</p>
-                    </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            </div>
 
-            {{-- In Progress --}}
-            <x-filament::section>
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-full bg-info-100 dark:bg-info-900">
-                        <x-heroicon-o-arrow-path class="w-6 h-6 text-info-600 dark:text-info-400" />
+            {{-- In Progress (clickable) --}}
+            <div
+                wire:click="setStatusCardFilter('in_progress')"
+                class="{{ $cardBase }} {{ $activeCard === 'in_progress' ? $cardActive : $cardInactive }}"
+            >
+                <x-filament::section>
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-full bg-info-100 dark:bg-info-900">
+                            <x-heroicon-o-arrow-path class="w-6 h-6 text-info-600 dark:text-info-400" />
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">In Progress {{ $activeCard === 'in_progress' ? '●' : '' }}</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['in_progress_tasks'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['in_progress_tasks'] }}</p>
-                    </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            </div>
 
-            {{-- Overdue --}}
-            <x-filament::section>
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-full bg-danger-100 dark:bg-danger-900">
-                        <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-danger-600 dark:text-danger-400" />
+            {{-- Overdue (clickable) --}}
+            <div
+                wire:click="setStatusCardFilter('_overdue')"
+                class="{{ $cardBase }} {{ $activeCard === '_overdue' ? $cardActive : $cardInactive }}"
+            >
+                <x-filament::section>
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-full bg-danger-100 dark:bg-danger-900">
+                            <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-danger-600 dark:text-danger-400" />
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Overdue {{ $activeCard === '_overdue' ? '●' : '' }}</p>
+                            <p class="text-2xl font-bold {{ $stats['overdue_tasks'] > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white' }}">{{ $stats['overdue_tasks'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Overdue</p>
-                        <p class="text-2xl font-bold {{ $stats['overdue_tasks'] > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white' }}">{{ $stats['overdue_tasks'] }}</p>
-                    </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            </div>
         </div>
 
         {{-- Second Row Stats --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 {{ $hasStoryPoints ? 'md:grid-cols-4' : 'md:grid-cols-2' }} gap-4">
             {{-- Completion Rate --}}
             <x-filament::section>
                 <div class="text-center">
@@ -155,32 +191,63 @@
                 </div>
             </x-filament::section>
 
-            {{-- Story Points Total --}}
-            <x-filament::section>
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                        <x-heroicon-o-star class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            {{-- Story Points (only shown when any tasks have points) --}}
+            @if($hasStoryPoints)
+                <x-filament::section>
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                            <x-heroicon-o-star class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Total Points</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total_story_points'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Points</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total_story_points'] }}</p>
-                    </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
 
-            {{-- Story Points Completed --}}
-            <x-filament::section>
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                        <x-heroicon-s-star class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <x-filament::section>
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                            <x-heroicon-s-star class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Points Done</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['completed_story_points'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Points Done</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['completed_story_points'] }}</p>
-                    </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            @endif
         </div>
+
+        {{-- Workload by Team Member (only when not filtered to a single user) --}}
+        @if(! $user)
+            @php $workload = $this->getWorkloadByUser(); @endphp
+            @if($workload->isNotEmpty())
+                <x-filament::section>
+                    <x-slot name="heading">Workload by Team Member</x-slot>
+                    <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @foreach($workload as $member)
+                            @php $barWidth = round(($member->task_count / $workload->max('task_count')) * 100); @endphp
+                            <div class="flex items-center gap-4 py-2.5 first:pt-0 last:pb-0">
+                                <button
+                                    wire:click="$set('selectedUserId', {{ $member->id }})"
+                                    class="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 text-left hover:text-primary-600 dark:hover:text-primary-400 transition"
+                                >
+                                    <div class="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                        {{ strtoupper(substr($member->name, 0, 1)) }}
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $member->name }}</span>
+                                </button>
+                                <div class="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-primary-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ $barWidth }}%"></div>
+                                </div>
+                                <span class="text-sm font-bold text-gray-700 dark:text-gray-300 w-6 text-right flex-shrink-0">{{ $member->task_count }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </x-filament::section>
+            @endif
+        @endif
 
         {{-- Task Distribution & Weekly Progress --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -189,27 +256,19 @@
                 <x-slot name="heading">Task Distribution</x-slot>
                 <div class="space-y-3">
                     @php
-                        $statusLabels = [
-                            'todo' => ['label' => 'To Do', 'color' => 'bg-gray-500'],
-                            'in_progress' => ['label' => 'In Progress', 'color' => 'bg-info-500'],
-                            'in_review' => ['label' => 'In Review', 'color' => 'bg-warning-500'],
-                            'done' => ['label' => 'Done', 'color' => 'bg-success-500'],
-                            'completed' => ['label' => 'Completed', 'color' => 'bg-success-500'],
-                        ];
                         $totalForBar = array_sum($tasksByStatus) ?: 1;
                     @endphp
                     @forelse($tasksByStatus as $status => $count)
                         @php
-                            $info = $statusLabels[$status] ?? ['label' => ucwords(str_replace('_', ' ', $status)), 'color' => 'bg-gray-400'];
                             $percentage = round(($count / $totalForBar) * 100, 1);
                         @endphp
                         <div>
                             <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600 dark:text-gray-300">{{ $info['label'] }}</span>
+                                <span class="text-gray-600 dark:text-gray-300">{{ ucwords(str_replace('_', ' ', $status)) }}</span>
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $count }} ({{ $percentage }}%)</span>
                             </div>
                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                <div class="{{ $info['color'] }} h-2.5 rounded-full transition-all duration-500" style="width: {{ $percentage }}%"></div>
+                                <div class="bg-primary-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ $percentage }}%"></div>
                             </div>
                         </div>
                     @empty
@@ -245,11 +304,26 @@
         </div>
 
         {{-- Tasks Table --}}
+        <div x-on:scroll-to-tasks.window="$el.scrollIntoView({behavior: 'smooth', block: 'start'})">
         <x-filament::section>
             <x-slot name="heading">
-                {{ $user ? $user->name . "'s Tasks" : 'All Team Tasks' }}
+                <div class="flex items-center gap-3">
+                    <span>{{ $user ? $user->name . "'s Tasks" : 'All Team Tasks' }}</span>
+                    @if($this->statusCardFilter)
+                        <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300">
+                            {{ match($this->statusCardFilter) {
+                                '_overdue' => 'Overdue only',
+                                '_completed' => 'Completed only',
+                                'in_progress' => 'In Progress only',
+                                default => $this->statusCardFilter,
+                            } }}
+                            <button wire:click="setStatusCardFilter('{{ $this->statusCardFilter }}')" class="hover:text-primary-900 dark:hover:text-primary-100">✕</button>
+                        </span>
+                    @endif
+                </div>
             </x-slot>
             {{ $this->table }}
         </x-filament::section>
+        </div>
     </div>
 </x-filament-panels::page>
