@@ -3,32 +3,43 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ProjectStatus;
+use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Task;
-use App\Models\User;
+use App\Models\WorkflowStatus;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverviewWidget extends BaseWidget
 {
+    use HasDepartmentScope;
+
     protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
-        $completedSlugs = \App\Models\WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $departmentIds = $this->getDepartmentIds();
 
-        $totalTasks = Task::count();
-        $completedTasks = Task::whereIn('status', $completedSlugs)->count();
-        $overdueTasks = Task::overdue()->count();
-        $completedThisWeek = Task::whereIn('status', $completedSlugs)
+        $totalTasks = $this->scopeTasksToDepartments(Task::query(), $departmentIds)->count();
+        $completedTasks = $this->scopeTasksToDepartments(Task::query(), $departmentIds)->whereIn('status', $completedSlugs)->count();
+        $overdueTasks = $this->scopeTasksToDepartments(Task::overdue(), $departmentIds)->count();
+        $completedThisWeek = $this->scopeTasksToDepartments(Task::query(), $departmentIds)
+            ->whereIn('status', $completedSlugs)
             ->where('updated_at', '>=', now()->startOfWeek())
             ->count();
-        $unassignedTasks = Task::unassigned()->whereNotIn('status', $completedSlugs)->count();
-        $activeSprints = Sprint::where('status', 'active')->count();
+        $unassignedTasks = $this->scopeTasksToDepartments(Task::unassigned(), $departmentIds)
+            ->whereNotIn('status', $completedSlugs)
+            ->count();
+        $sprintQuery = Sprint::where('status', 'active');
+        if (! empty($departmentIds)) {
+            $sprintQuery->whereHas('project', fn ($q) => $q->whereIn('department_id', $departmentIds));
+        }
+        $activeSprints = $sprintQuery->count();
 
         return [
-            Stat::make('Active Projects', Project::where('status', ProjectStatus::ACTIVE)->count())
+            Stat::make('Active Projects', $this->scopeProjectsToDepartments(Project::where('status', ProjectStatus::ACTIVE), $departmentIds)->count())
                 ->description('Total active projects')
                 ->descriptionIcon('heroicon-m-folder-open')
                 ->color('success'),

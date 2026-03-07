@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\Department;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -43,6 +44,37 @@ class UserResource extends Resource
                             ->label('Roles')
                             ->columnSpanFull(),
                     ])->columns(2),
+                Forms\Components\Section::make('Departments')
+                    ->schema([
+                        Forms\Components\Select::make('departments')
+                            ->multiple()
+                            ->options(Department::orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->label('Departments')
+                            ->helperText('Assign this user to one or more departments. Use the Departments page to set their role (Manager/Member).')
+                            ->saveRelationshipsUsing(function ($component, $record, $state) {
+                                // Attach new, detach removed — preserve existing roles
+                                $current = $record->departments()->pluck('departments.id')->toArray();
+                                $new = array_map('intval', $state ?? []);
+
+                                $toAttach = array_diff($new, $current);
+                                $toDetach = array_diff($current, $new);
+
+                                foreach ($toAttach as $id) {
+                                    $record->departments()->attach($id, ['role' => 'member']);
+                                }
+                                $record->departments()->detach($toDetach);
+                            })
+                            ->dehydrated(false) // handled by saveRelationshipsUsing
+                            ->afterStateHydrated(function ($component, $record) {
+                                if ($record) {
+                                    $component->state(
+                                        $record->departments()->pluck('departments.id')->toArray()
+                                    );
+                                }
+                            }),
+                    ])
+                    ->collapsible(),
             ]);
     }
 
@@ -59,6 +91,11 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('roles.name')
                     ->badge()
                     ->label('Roles'),
+                Tables\Columns\TextColumn::make('departments.name')
+                    ->badge()
+                    ->color('info')
+                    ->label('Departments')
+                    ->separator(','),
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->boolean()
                     ->label('Verified')
@@ -76,7 +113,7 @@ class UserResource extends Resource
                     ->color('info')
                     ->requiresConfirmation()
                     ->modalHeading('Send Invite')
-                    ->modalDescription(fn(User $record) => 'Send a password setup link to ' . $record->email . '?')
+                    ->modalDescription(fn (User $record) => 'Send a password setup link to '.$record->email.'?')
                     ->modalSubmitActionLabel('Send')
                     ->action(function (User $record) {
                         $record->markEmailAsVerified();
@@ -86,7 +123,7 @@ class UserResource extends Resource
                         if ($status === Password::RESET_LINK_SENT) {
                             Notification::make()
                                 ->title('Invite sent')
-                                ->body($record->email . ' will receive an email to set their password.')
+                                ->body($record->email.' will receive an email to set their password.')
                                 ->success()
                                 ->send();
                         } else {
@@ -116,9 +153,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListUsers::route('/'),
+            'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
-            'edit'   => Pages\EditUser::route('/{record}/edit'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
 }

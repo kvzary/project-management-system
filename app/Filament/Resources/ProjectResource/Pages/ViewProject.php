@@ -4,7 +4,6 @@ namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource;
-use App\Models\Project;
 use App\Models\User;
 use App\Services\PresenceService;
 use Filament\Actions;
@@ -29,7 +28,9 @@ class ViewProject extends Page implements HasForms
     protected static string $view = 'filament.resources.project-resource.pages.view-project';
 
     public ?array $detailsData = [];
+
     public ?array $descriptionData = [];
+
     public bool $isEditingDescription = false;
 
     public function mount(int|string $record): void
@@ -66,7 +67,7 @@ class ViewProject extends Page implements HasForms
     {
         $viewerIds = PresenceService::getViewerIds('project', $this->record->id);
         $currentUserId = auth()->id();
-        $viewerIds = array_filter($viewerIds, fn($id) => $id != $currentUserId);
+        $viewerIds = array_filter($viewerIds, fn ($id) => $id != $currentUserId);
 
         if (empty($viewerIds)) {
             return collect();
@@ -78,6 +79,7 @@ class ViewProject extends Page implements HasForms
     public function getViewerCount(): int
     {
         $count = PresenceService::getViewerCount('project', $this->record->id);
+
         return max(0, $count - 1);
     }
 
@@ -164,6 +166,8 @@ class ViewProject extends Page implements HasForms
 
     public function saveDetails(): void
     {
+        abort_unless(ProjectResource::canEdit($this->record), 403);
+
         $data = $this->detailsForm->getState();
         $this->record->update($data);
 
@@ -183,6 +187,8 @@ class ViewProject extends Page implements HasForms
 
     public function saveDescription(): void
     {
+        abort_unless(ProjectResource::canEdit($this->record), 403);
+
         $data = $this->descriptionForm->getState();
         $this->record->update($data);
         $this->isEditingDescription = false;

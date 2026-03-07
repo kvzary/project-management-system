@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TaskResource extends Resource
@@ -86,6 +87,7 @@ class TaskResource extends Resource
                                         return $project->getStatusOptions();
                                     }
                                 }
+
                                 return Workflow::getDefault()?->getStatusOptions() ?? [];
                             })
                             ->default('todo')
@@ -203,7 +205,7 @@ class TaskResource extends Resource
                     ->date()
                     ->sortable()
                     ->toggleable()
-                    ->color(fn ($record) => $record->due_date && $record->due_date < now() && !$record->isCompleted() ? 'danger' : null),
+                    ->color(fn ($record) => $record->due_date && $record->due_date < now() && ! $record->isCompleted() ? 'danger' : null),
                 Tables\Columns\TextColumn::make('watchers_count')
                     ->counts('watchers')
                     ->label('Watchers')
@@ -279,12 +281,56 @@ class TaskResource extends Resource
         ];
     }
 
+    public static function canView(Model $record): bool
+    {
+        $user = auth()->user();
+
+        if ($user->isSystemAdmin()) {
+            return true;
+        }
+
+        if ((int) $record->assigned_to === $user->id || (int) $record->reporter_id === $user->id) {
+            return true;
+        }
+
+        if (! $record->project_id) {
+            return false;
+        }
+
+        $departmentIds = $user->departments()->pluck('departments.id');
+
+        return Project::where('id', $record->project_id)
+            ->whereIn('department_id', $departmentIds)
+            ->exists();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        // Assignees and reporters can edit tasks assigned to them cross-department
+        return static::canView($record);
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with(['project.workflow.statuses'])
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            ->withoutGlobalScopes([SoftDeletingScope::class]);
+
+        $user = auth()->user();
+
+        if ($user->isSystemAdmin()) {
+            return $query;
+        }
+
+        $departmentIds = $user->departments()->pluck('departments.id');
+
+        return $query->where(function (Builder $q) use ($departmentIds, $user) {
+            // Tasks in projects belonging to the user's departments
+            $q->whereHas('project', fn ($pq) => $pq->whereIn('department_id', $departmentIds))
+            // OR tasks assigned to the user (cross-department)
+                ->orWhere('assigned_to', $user->id)
+            // OR tasks reported by the user
+                ->orWhere('reporter_id', $user->id);
+        });
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkflowStatus;
@@ -10,11 +11,13 @@ use Illuminate\Support\Carbon;
 
 class TeamTaskTrendsWidget extends ChartWidget
 {
+    use HasDepartmentScope;
+
     protected static ?string $heading = 'Team Task Trends';
 
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static string $view = 'filament.widgets.team-task-trends-widget';
 
@@ -42,10 +45,10 @@ class TeamTaskTrendsWidget extends ChartWidget
     public function getStatusOptions(): array
     {
         return [
-            ''          => 'All Statuses',
+            '' => 'All Statuses',
             'completed' => 'Completed',
-            'overdue'   => 'Overdue',
-            'active'    => 'Active',
+            'overdue' => 'Overdue',
+            'active' => 'Active',
         ];
     }
 
@@ -66,6 +69,7 @@ class TeamTaskTrendsWidget extends ChartWidget
         $statusType = $this->statusFilter ?: null;
 
         $completedSlugs = WorkflowStatus::where('is_completed', true)->pluck('slug')->toArray();
+        $departmentIds = $this->getDepartmentIds();
 
         $start = Carbon::create($year)->startOfYear();
         $end = Carbon::create($year)->endOfYear();
@@ -77,13 +81,50 @@ class TeamTaskTrendsWidget extends ChartWidget
             $current->addWeek();
         }
 
-        $labels = collect($weeks)->map(fn ($w) => 'W' . $w->weekOfYear)->toArray();
+        $labels = collect($weeks)->map(fn ($w) => 'W'.$w->weekOfYear)->toArray();
+        $weekNumbers = collect($weeks)->map(fn ($w) => $w->weekOfYear)->toArray();
 
-        $usersQuery = User::whereHas('assignedTasks');
+        $usersQuery = User::whereHas('assignedTasks')
+            ->when(! empty($departmentIds), fn ($q) => $q->whereHas('departments', fn ($dq) => $dq->whereIn('departments.id', $departmentIds)));
         if ($assigneeId) {
             $usersQuery->where('id', $assigneeId);
         }
         $users = $usersQuery->get();
+
+        // Bulk-load all data in 3 aggregated queries instead of 52 × 3 × N individual queries.
+        $completedByUserWeek = Task::query()
+            ->selectRaw('assigned_to, WEEK(updated_at, 1) as week, COUNT(*) as count')
+            ->whereIn('status', $completedSlugs)
+            ->whereBetween('updated_at', [$start, $end])
+            ->when($assigneeId, fn ($q) => $q->where('assigned_to', $assigneeId))
+            ->when(! empty($departmentIds), fn ($q) => $q->whereHas('project', fn ($pq) => $pq->whereIn('department_id', $departmentIds)))
+            ->groupBy('assigned_to', 'week')
+            ->get()
+            ->groupBy('assigned_to')
+            ->map(fn ($rows) => $rows->pluck('count', 'week'));
+
+        $overdueByUserWeek = Task::query()
+            ->selectRaw('assigned_to, WEEK(due_date, 1) as week, COUNT(*) as count')
+            ->whereNotIn('status', $completedSlugs)
+            ->whereNotNull('due_date')
+            ->whereBetween('due_date', [$start, $end])
+            ->when($assigneeId, fn ($q) => $q->where('assigned_to', $assigneeId))
+            ->when(! empty($departmentIds), fn ($q) => $q->whereHas('project', fn ($pq) => $pq->whereIn('department_id', $departmentIds)))
+            ->groupBy('assigned_to', 'week')
+            ->get()
+            ->groupBy('assigned_to')
+            ->map(fn ($rows) => $rows->pluck('count', 'week'));
+
+        $activeByUserWeek = Task::query()
+            ->selectRaw('assigned_to, WEEK(created_at, 1) as week, COUNT(*) as count')
+            ->whereNotIn('status', $completedSlugs)
+            ->whereBetween('created_at', [$start, $end])
+            ->when($assigneeId, fn ($q) => $q->where('assigned_to', $assigneeId))
+            ->when(! empty($departmentIds), fn ($q) => $q->whereHas('project', fn ($pq) => $pq->whereIn('department_id', $departmentIds)))
+            ->groupBy('assigned_to', 'week')
+            ->get()
+            ->groupBy('assigned_to')
+            ->map(fn ($rows) => $rows->pluck('count', 'week'));
 
         $colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
         $datasets = [];
@@ -93,48 +134,39 @@ class TeamTaskTrendsWidget extends ChartWidget
             $color = $colors[$colorIndex % count($colors)];
             $colorIndex++;
 
-            if (!$statusType || $statusType === 'completed') {
+            $userCompleted = $completedByUserWeek->get($user->id, collect());
+            $userOverdue = $overdueByUserWeek->get($user->id, collect());
+            $userActive = $activeByUserWeek->get($user->id, collect());
+
+            if (! $statusType || $statusType === 'completed') {
                 $datasets[] = [
-                    'label' => $user->name . ' (Completed)',
-                    'data' => collect($weeks)->map(fn ($week) => Task::where('assigned_to', $user->id)
-                        ->whereIn('status', $completedSlugs)
-                        ->whereBetween('updated_at', [$week->copy()->startOfWeek(), $week->copy()->endOfWeek()])
-                        ->count()
-                    )->toArray(),
+                    'label' => $user->name.' (Completed)',
+                    'data' => collect($weekNumbers)->map(fn ($week) => (int) ($userCompleted[$week] ?? 0))->toArray(),
                     'borderColor' => $color,
-                    'backgroundColor' => $color . '33',
+                    'backgroundColor' => $color.'33',
                     'fill' => false,
                     'tension' => 0.3,
                 ];
             }
 
-            if (!$statusType || $statusType === 'overdue') {
+            if (! $statusType || $statusType === 'overdue') {
                 $datasets[] = [
-                    'label' => $user->name . ' (Overdue)',
-                    'data' => collect($weeks)->map(fn ($week) => Task::where('assigned_to', $user->id)
-                        ->whereNotIn('status', $completedSlugs)
-                        ->whereNotNull('due_date')
-                        ->where('due_date', '<', $week->copy()->endOfWeek())
-                        ->count()
-                    )->toArray(),
+                    'label' => $user->name.' (Overdue)',
+                    'data' => collect($weekNumbers)->map(fn ($week) => (int) ($userOverdue[$week] ?? 0))->toArray(),
                     'borderColor' => $color,
-                    'backgroundColor' => $color . '33',
+                    'backgroundColor' => $color.'33',
                     'borderDash' => [5, 5],
                     'fill' => false,
                     'tension' => 0.3,
                 ];
             }
 
-            if (!$statusType || $statusType === 'active') {
+            if (! $statusType || $statusType === 'active') {
                 $datasets[] = [
-                    'label' => $user->name . ' (Active)',
-                    'data' => collect($weeks)->map(fn ($week) => Task::where('assigned_to', $user->id)
-                        ->whereNotIn('status', $completedSlugs)
-                        ->where('created_at', '<=', $week->copy()->endOfWeek())
-                        ->count()
-                    )->toArray(),
+                    'label' => $user->name.' (Active)',
+                    'data' => collect($weekNumbers)->map(fn ($week) => (int) ($userActive[$week] ?? 0))->toArray(),
                     'borderColor' => $color,
-                    'backgroundColor' => $color . '33',
+                    'backgroundColor' => $color.'33',
                     'borderDash' => [2, 2],
                     'fill' => false,
                     'tension' => 0.3,

@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
-use App\Filament\Resources\ProjectResource\RelationManagers;
+use App\Models\Department;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
@@ -31,6 +32,21 @@ class ProjectResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Project Information')
                     ->schema([
+                        Forms\Components\Select::make('department_id')
+                            ->label('Department')
+                            ->options(function () {
+                                $user = auth()->user();
+                                if ($user->isSystemAdmin()) {
+                                    return Department::orderBy('name')->pluck('name', 'id');
+                                }
+
+                                // Non-admins can only create projects in their own departments
+                                return $user->departments()->orderBy('name')->pluck('name', 'departments.id');
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -125,6 +141,9 @@ class ProjectResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ColorColumn::make('department.color')
+                    ->label('')
+                    ->tooltip(fn ($record) => $record->department?->name),
                 Tables\Columns\TextColumn::make('key')
                     ->searchable()
                     ->sortable()
@@ -209,11 +228,54 @@ class ProjectResource extends Resource
         ];
     }
 
+    public static function canView(Model $record): bool
+    {
+        $user = auth()->user();
+
+        if ($user->isSystemAdmin()) {
+            return true;
+        }
+
+        $departmentIds = $user->departments()->pluck('departments.id');
+
+        if ($departmentIds->contains($record->department_id)) {
+            return true;
+        }
+
+        // Cross-department: user is assigned to at least one task in this project
+        return $record->tasks()->where('assigned_to', $user->id)->exists();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        $user = auth()->user();
+
+        if ($user->isSystemAdmin()) {
+            return true;
+        }
+
+        // Only members of the project's own department may edit it
+        return $user->departments()->where('departments.id', $record->department_id)->exists();
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class]);
+
+        $user = auth()->user();
+
+        if ($user->isSystemAdmin()) {
+            return $query;
+        }
+
+        $departmentIds = $user->departments()->pluck('departments.id');
+
+        return $query->where(function (Builder $q) use ($departmentIds, $user) {
+            // Projects in the user's departments
+            $q->whereIn('department_id', $departmentIds)
+            // OR projects where the user is assigned to at least one task
+                ->orWhereHas('tasks', fn ($tq) => $tq->where('assigned_to', $user->id));
+        });
     }
 }
