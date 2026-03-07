@@ -37,6 +37,12 @@ class EditTask extends EditRecord
         $this->trackPresence();
     }
 
+    protected function afterSave(): void
+    {
+        $firstAssignee = $this->record->assignees()->first();
+        $this->record->updateQuietly(['assigned_to' => $firstAssignee?->id]);
+    }
+
     public function dehydrate(): void
     {
         $this->trackPresence();

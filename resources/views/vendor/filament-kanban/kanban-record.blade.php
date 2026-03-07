@@ -103,13 +103,25 @@
             @endif
         </div>
 
-        {{-- Assignee Avatar + Name --}}
+        {{-- Assignees --}}
+        @php $assignees = $record->relationLoaded('assignees') ? $record->assignees : collect(); @endphp
         <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
-            @if($record->assignee)
-                <div class="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0" title="{{ $record->assignee->name }}">
-                    {{ strtoupper(substr($record->assignee->name, 0, 1)) }}
+            @if($assignees->isNotEmpty())
+                <div class="flex -space-x-1">
+                    @foreach($assignees->take(3) as $assignee)
+                        <div class="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-medium ring-1 ring-white dark:ring-gray-700 flex-shrink-0" title="{{ $assignee->name }}">
+                            {{ strtoupper(substr($assignee->name, 0, 1)) }}
+                        </div>
+                    @endforeach
+                    @if($assignees->count() > 3)
+                        <div class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium ring-1 ring-white dark:ring-gray-700" title="{{ $assignees->count() - 3 }} more">
+                            +{{ $assignees->count() - 3 }}
+                        </div>
+                    @endif
                 </div>
-                <span class="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[80px]">{{ $record->assignee->name }}</span>
+                @if($assignees->count() === 1)
+                    <span class="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[80px]">{{ $assignees->first()->name }}</span>
+                @endif
             @else
                 <div class="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0" title="Unassigned">
                     <x-filament::icon icon="heroicon-o-user" class="w-3 h-3 text-gray-400" />

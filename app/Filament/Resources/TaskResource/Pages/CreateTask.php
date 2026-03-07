@@ -19,4 +19,10 @@ class CreateTask extends CreateRecord
             ]);
         }
     }
+
+    protected function afterCreate(): void
+    {
+        $firstAssignee = $this->record->assignees()->first();
+        $this->record->updateQuietly(['assigned_to' => $firstAssignee?->id]);
+    }
 }

@@ -47,6 +47,7 @@ class ViewTask extends Page implements HasForms
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
+        $this->record->loadMissing('assignees');
         $this->trackPresence();
 
         $this->detailsForm->fill([
@@ -55,7 +56,7 @@ class ViewTask extends Page implements HasForms
             'status' => $this->record->status,
             'priority' => $this->record->priority,
             'type' => $this->record->type,
-            'assigned_to' => $this->record->assigned_to,
+            'assignees' => $this->record->assignees->pluck('id')->toArray(),
             'product_manager_id' => $this->record->product_manager_id,
             'due_date' => $this->record->due_date,
             'story_points' => $this->record->story_points,
@@ -175,11 +176,11 @@ class ViewTask extends Page implements HasForms
                     ->native(false)
                     ->live()
                     ->afterStateUpdated(fn () => $this->saveDetails()),
-                Select::make('assigned_to')
-                    ->label('Assignee')
-                    ->relationship('assignee', 'name')
+                Select::make('assignees')
+                    ->label('Assignees')
+                    ->multiple()
+                    ->options(User::orderBy('name')->pluck('name', 'id'))
                     ->searchable()
-                    ->preload()
                     ->live()
                     ->afterStateUpdated(fn () => $this->saveDetails()),
                 Select::make('product_manager_id')
@@ -252,6 +253,11 @@ class ViewTask extends Page implements HasForms
         abort_unless(TaskResource::canEdit($this->record), 403);
 
         $data = $this->detailsForm->getState();
+
+        $assigneeIds = $data['assignees'] ?? [];
+        unset($data['assignees']);
+
+        $this->record->syncAssignees($assigneeIds);
         $this->record->update($data);
 
         $this->dispatch('task-updated');
