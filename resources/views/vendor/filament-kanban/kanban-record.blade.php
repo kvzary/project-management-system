@@ -43,13 +43,23 @@
     </div>
 
     {{-- Title --}}
-    <div class="font-medium text-sm text-gray-900 dark:text-gray-100 mb-3 line-clamp-2">
+    <div class="font-medium text-sm text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
         {{ $record->{static::$recordTitleAttribute} }}
     </div>
 
-    {{-- Footer with Priority, Story Points, Assignee --}}
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
+    {{-- Sprint label --}}
+    @if($record->sprint)
+        <div class="mb-2">
+            <span class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 rounded px-1.5 py-0.5">
+                <x-heroicon-o-arrow-path class="w-3 h-3" />
+                {{ $record->sprint->name }}
+            </span>
+        </div>
+    @endif
+
+    {{-- Footer with Priority, Story Points, Due Date, Assignee --}}
+    <div class="flex items-center justify-between gap-2 mt-1">
+        <div class="flex items-center gap-2 min-w-0">
             {{-- Priority --}}
             @php
                 $priority = $record->priority?->value ?? 'medium';
@@ -70,13 +80,13 @@
             @endphp
             <x-filament::icon
                 :icon="$priorityIcon"
-                class="w-4 h-4 {{ $priorityColor }}"
+                class="w-4 h-4 flex-shrink-0 {{ $priorityColor }}"
                 title="Priority: {{ ucfirst($priority) }}"
             />
 
             {{-- Story Points --}}
             @if($record->story_points)
-                <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-gray-100 dark:bg-gray-600 rounded-full" title="Story Points">
+                <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-gray-100 dark:bg-gray-600 rounded-full flex-shrink-0" title="{{ $record->story_points }} {{ Str::plural('story point', $record->story_points) }}">
                     {{ $record->story_points }}
                 </span>
             @endif
@@ -87,25 +97,24 @@
                     $statusValue = is_string($record->status) ? $record->status : ($record->status?->value ?? '');
                     $isOverdue = $record->due_date->isPast() && $statusValue !== 'done';
                 @endphp
-                <span class="text-xs {{ $isOverdue ? 'text-red-500 font-medium' : 'text-gray-500' }}" title="Due: {{ $record->due_date->format('M d, Y') }}">
+                <span class="text-xs flex-shrink-0 {{ $isOverdue ? 'text-red-500 font-medium' : 'text-gray-500' }}" title="Due: {{ $record->due_date->format('M d, Y') }}">
                     {{ $record->due_date->format('M d') }}
                 </span>
             @endif
         </div>
 
-        {{-- Assignee Avatar --}}
-        <div>
+        {{-- Assignee Avatar + Name --}}
+        <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
             @if($record->assignee)
-                <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-medium" title="{{ $record->assignee->name }}">
+                <div class="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0" title="{{ $record->assignee->name }}">
                     {{ strtoupper(substr($record->assignee->name, 0, 1)) }}
                 </div>
+                <span class="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[80px]">{{ $record->assignee->name }}</span>
             @else
-                <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center" title="Unassigned">
-                    <x-filament::icon
-                        icon="heroicon-o-user"
-                        class="w-4 h-4 text-gray-400"
-                    />
+                <div class="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0" title="Unassigned">
+                    <x-filament::icon icon="heroicon-o-user" class="w-3 h-3 text-gray-400" />
                 </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500">Unassigned</span>
             @endif
         </div>
     </div>
