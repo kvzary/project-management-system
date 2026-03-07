@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
+use App\Notifications\TaskAssignedNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -103,10 +104,51 @@ class Task extends Model implements HasMedia {
 
 	/**
 	 * Sync the assignees pivot and keep assigned_to pointing at the first assignee.
+	 * Also logs a comment and sends a notification for each newly added assignee.
 	 */
 	public function syncAssignees(array $userIds): void {
+		$oldIds = $this->assignees()->pluck('users.id')->toArray();
 		$this->assignees()->sync($userIds);
 		$this->updateQuietly(['assigned_to' => $userIds[0] ?? null]);
+		$this->notifyNewAssignees($oldIds, $userIds);
+	}
+
+	/**
+	 * Log a comment and notify users who were newly added or removed as assignees.
+	 */
+	public function notifyNewAssignees(array $oldIds, array $newIds): void {
+		$addedIds   = array_diff($newIds, $oldIds);
+		$removedIds = array_diff($oldIds, $newIds);
+
+		if (empty($addedIds) && empty($removedIds)) {
+			return;
+		}
+
+		$assignedBy = auth()->user();
+
+		if (!empty($addedIds)) {
+			$addedUsers = User::whereIn('id', $addedIds)->get();
+			foreach ($addedUsers as $user) {
+				$this->comments()->create([
+					'user_id' => $assignedBy?->id,
+					'body'    => 'Assigned ' . $user->name . ' to this task.',
+				]);
+
+				if ($user->id !== $assignedBy?->id) {
+					$user->notify(new TaskAssignedNotification($this, $assignedBy?->name));
+				}
+			}
+		}
+
+		if (!empty($removedIds)) {
+			$removedUsers = User::whereIn('id', $removedIds)->get();
+			foreach ($removedUsers as $user) {
+				$this->comments()->create([
+					'user_id' => $assignedBy?->id,
+					'body'    => 'Removed ' . $user->name . ' from this task.',
+				]);
+			}
+		}
 	}
 
 	public function reporter(): BelongsTo {

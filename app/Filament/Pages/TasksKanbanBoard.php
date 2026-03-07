@@ -342,11 +342,10 @@ class TasksKanbanBoard extends KanbanBoard
     {
         $task = Task::find($recordId);
         $assignees = $data['assignees'] ?? null;
-        unset($data['assignees']);
+        unset($data['assignees'], $data['assigned_to']);
 
         if ($assignees !== null) {
-            $data['assigned_to'] = $assignees[0] ?? null;
-            $task->assignees()->sync($assignees);
+            $task->syncAssignees($assignees);
         }
 
         $task->update($data);

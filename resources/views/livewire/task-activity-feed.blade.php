@@ -107,7 +107,7 @@
                         @if($item['type'] === 'comment')
                             {{-- Comment Content --}}
                             <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
-                                {{ $item['content'] }}
+                                {!! $item['content'] !!}
                             </div>
                         @else
                             {{-- Activity Changes --}}
