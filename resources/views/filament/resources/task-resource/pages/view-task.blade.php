@@ -190,15 +190,6 @@
                 </div>
             </div>
 
-            {{-- Activity & Comments Section --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Activity</h3>
-                </div>
-                <div class="p-4">
-                    @livewire('task-activity-feed', ['task' => $this->record], key('activity-' . $this->record->id))
-                </div>
-            </div>
         </div>
 
         {{-- Details Sidebar --}}
