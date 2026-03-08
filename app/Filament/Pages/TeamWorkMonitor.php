@@ -14,21 +14,22 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 
 class TeamWorkMonitor extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static string $view = 'filament.pages.team-work-monitor';
+    protected string $view = 'filament.pages.team-work-monitor';
 
     protected static ?string $navigationLabel = 'Work Monitor';
 
     protected static ?string $title = 'Team Work Monitor';
 
-    protected static ?string $navigationGroup = 'Team';
+    protected static string|\UnitEnum|null $navigationGroup = 'Team';
 
     protected static ?int $navigationSort = 10;
 
@@ -57,12 +58,12 @@ class TeamWorkMonitor extends Page implements HasTable
         }
     }
 
-    public function getUsers(): \Illuminate\Support\Collection
+    public function getUsers(): Collection
     {
         return User::orderBy('name')->pluck('name', 'id');
     }
 
-    public function getSprints(): \Illuminate\Support\Collection
+    public function getSprints(): Collection
     {
         return Sprint::query()
             ->when($this->selectedUserId, fn ($q) => $q->whereHas('tasks', fn ($tq) => $tq->where('assigned_to', $this->selectedUserId)))
@@ -242,7 +243,7 @@ class TeamWorkMonitor extends Page implements HasTable
         ];
     }
 
-    public function getWorkloadByUser(): \Illuminate\Support\Collection
+    public function getWorkloadByUser(): Collection
     {
         return User::query()
             ->withCount(['assignedTasks as task_count' => fn ($q) => $q
@@ -254,7 +255,7 @@ class TeamWorkMonitor extends Page implements HasTable
             ->values();
     }
 
-    public function getRecentActivity(): \Illuminate\Support\Collection
+    public function getRecentActivity(): Collection
     {
         $query = Task::query()
             ->whereNull('deleted_at')

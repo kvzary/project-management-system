@@ -2,8 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Models\Project;
+use App\Models\Sprint;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\MentionParser;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
@@ -11,6 +15,7 @@ use Spatie\Activitylog\Models\Activity;
 class TaskActivityFeed extends Component
 {
     public Task $task;
+
     public string $newComment = '';
 
     public function mount(Task $task): void
@@ -65,7 +70,7 @@ class TaskActivityFeed extends Component
         }
     }
 
-    public function getFeedProperty(): \Illuminate\Support\Collection
+    public function getFeedProperty(): Collection
     {
         // Get comments
         $comments = $this->task->comments()
@@ -89,9 +94,10 @@ class TaskActivityFeed extends Component
             ->get()
             ->map(function ($activity) {
                 $changes = $this->formatActivityChanges($activity);
+
                 return [
                     'type' => 'activity',
-                    'id' => 'activity-' . $activity->id,
+                    'id' => 'activity-'.$activity->id,
                     'user' => $activity->causer,
                     'event' => $activity->event ?? $activity->description,
                     'changes' => $changes,
@@ -119,7 +125,7 @@ class TaskActivityFeed extends Component
                     'old' => $this->formatValue($key, $old[$key]),
                     'new' => $this->formatValue($key, $value),
                 ];
-            } elseif (!isset($old[$key])) {
+            } elseif (! isset($old[$key])) {
                 $changes[] = [
                     'field' => $this->formatFieldName($key),
                     'old' => null,
@@ -153,19 +159,22 @@ class TaskActivityFeed extends Component
 
         // Handle user IDs
         if (in_array($field, ['assigned_to', 'reporter_id', 'product_manager_id'])) {
-            $user = \App\Models\User::find($value);
+            $user = User::find($value);
+
             return $user?->name ?? 'Unknown';
         }
 
         // Handle project
         if ($field === 'project_id') {
-            $project = \App\Models\Project::find($value);
+            $project = Project::find($value);
+
             return $project?->name ?? 'Unknown';
         }
 
         // Handle sprint
         if ($field === 'sprint_id') {
-            $sprint = \App\Models\Sprint::find($value);
+            $sprint = Sprint::find($value);
+
             return $sprint?->name ?? 'Backlog';
         }
 

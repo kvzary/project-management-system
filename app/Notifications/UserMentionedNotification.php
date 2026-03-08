@@ -2,10 +2,13 @@
 
 namespace App\Notifications;
 
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Comment;
+use App\Models\Project;
+use App\Models\Task;
 use App\Services\MentionParser;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -27,7 +30,7 @@ class UserMentionedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $commenter = $this->comment->user->name;
-        $subject   = $this->resolveSubject();
+        $subject = $this->resolveSubject();
 
         return (new MailMessage)
             ->greeting($subject['label'])
@@ -35,13 +38,13 @@ class UserMentionedNotification extends Notification
             ->line("{$commenter} mentioned you in a comment.")
             ->line(MentionParser::plainText($this->comment->body))
             ->action('View', $subject['url'])
-            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
+            ->salutation('Thanks, '.PHP_EOL.config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array
     {
         $commenter = $this->comment->user->name;
-        $subject   = $this->resolveSubject();
+        $subject = $this->resolveSubject();
 
         return FilamentNotification::make()
             ->title("{$commenter} mentioned you")
@@ -64,19 +67,19 @@ class UserMentionedNotification extends Notification
     {
         $commentable = $this->comment->commentable;
 
-        if ($commentable instanceof \App\Models\Task) {
+        if ($commentable instanceof Task) {
             return [
-                'label' => $commentable->project?->name . ' → ' . $commentable->title,
+                'label' => $commentable->project?->name.' → '.$commentable->title,
                 'title' => $commentable->title,
-                'url'   => TaskResource::getUrl('edit', ['record' => $commentable]),
+                'url' => TaskResource::getUrl('view', ['record' => $commentable]),
             ];
         }
 
-        if ($commentable instanceof \App\Models\Project) {
+        if ($commentable instanceof Project) {
             return [
                 'label' => $commentable->name,
                 'title' => $commentable->name,
-                'url'   => \App\Filament\Resources\ProjectResource::getUrl('view', ['record' => $commentable]),
+                'url' => ProjectResource::getUrl('view', ['record' => $commentable]),
             ];
         }
 

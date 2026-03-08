@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Project;
+use App\Models\User;
 use App\Services\MentionParser;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
@@ -11,6 +13,7 @@ use Spatie\Activitylog\Models\Activity;
 class ProjectActivityFeed extends Component
 {
     public Project $project;
+
     public string $newComment = '';
 
     public function mount(Project $project): void
@@ -65,7 +68,7 @@ class ProjectActivityFeed extends Component
         }
     }
 
-    public function getFeedProperty(): \Illuminate\Support\Collection
+    public function getFeedProperty(): Collection
     {
         // Get comments
         $comments = $this->project->comments()
@@ -89,9 +92,10 @@ class ProjectActivityFeed extends Component
             ->get()
             ->map(function ($activity) {
                 $changes = $this->formatActivityChanges($activity);
+
                 return [
                     'type' => 'activity',
-                    'id' => 'activity-' . $activity->id,
+                    'id' => 'activity-'.$activity->id,
                     'user' => $activity->causer,
                     'event' => $activity->event ?? $activity->description,
                     'changes' => $changes,
@@ -119,7 +123,7 @@ class ProjectActivityFeed extends Component
                     'old' => $this->formatValue($key, $old[$key]),
                     'new' => $this->formatValue($key, $value),
                 ];
-            } elseif (!isset($old[$key])) {
+            } elseif (! isset($old[$key])) {
                 $changes[] = [
                     'field' => $this->formatFieldName($key),
                     'old' => null,
@@ -149,7 +153,8 @@ class ProjectActivityFeed extends Component
 
         // Handle user IDs
         if (in_array($field, ['owner_id', 'product_manager_id'])) {
-            $user = \App\Models\User::find($value);
+            $user = User::find($value);
+
             return $user?->name ?? 'Unknown';
         }
 

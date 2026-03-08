@@ -2,9 +2,9 @@
 
 namespace App\Notifications;
 
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Task;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -31,12 +31,12 @@ class TaskAssignedNotification extends Notification
 
         return (new MailMessage)
             ->greeting("{$greeting}")
-            ->subject('Task Assigned: ' . $this->task->title)
+            ->subject('Task Assigned: '.$this->task->title)
             ->line("You have been assigned to a task{$assignedByText}.")
             ->line("Task: **{$this->task->title}**")
-            ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
+            ->action('View Task', TaskResource::getUrl('view', ['record' => $this->task]))
             ->line('Thank you for using our project management system.')
-            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
+            ->salutation('Thanks, '.PHP_EOL.config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array
@@ -51,7 +51,7 @@ class TaskAssignedNotification extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View Task')
-                    ->url(TaskResource::getUrl('edit', ['record' => $this->task]))
+                    ->url(TaskResource::getUrl('view', ['record' => $this->task]))
                     ->markAsRead(),
                 Action::make('mark_as_read')
                     ->label('Mark as Read')

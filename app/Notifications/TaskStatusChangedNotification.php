@@ -2,9 +2,9 @@
 
 namespace App\Notifications;
 
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Task;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -32,14 +32,14 @@ class TaskStatusChangedNotification extends Notification
         $greeting = ($this->task?->project?->name ? "{$this->task->project->name} → {$this->task->title}" : "{$this->task->title}");
 
         return (new MailMessage)
-        ->greeting("{$greeting}")
-            ->subject('Task Status Updated: ' . $this->task->title)
+            ->greeting("{$greeting}")
+            ->subject('Task Status Updated: '.$this->task->title)
             ->line("A task's status has been updated{$changedByText}.")
             ->line("**{$this->task->title}**")
             ->line("{$this->formatStatus($this->oldStatus)} → {$this->formatStatus($this->newStatus)}")
-            ->action('View Task', TaskResource::getUrl('edit', ['record' => $this->task]))
+            ->action('View Task', TaskResource::getUrl('view', ['record' => $this->task]))
             ->line('Thank you for using our project management system.')
-            ->salutation('Thanks, ' . PHP_EOL . config('app.name'));
+            ->salutation('Thanks, '.PHP_EOL.config('app.name'));
     }
 
     public function toDatabase(object $notifiable): array
@@ -54,7 +54,7 @@ class TaskStatusChangedNotification extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View Task')
-                    ->url(TaskResource::getUrl('edit', ['record' => $this->task]))
+                    ->url(TaskResource::getUrl('view', ['record' => $this->task]))
                     ->markAsRead(),
                 Action::make('mark_as_read')
                     ->label('Mark as Read')
