@@ -24,6 +24,9 @@ class CreateUser extends CreateRecord
 
     protected function afterCreate(): void
     {
+        // Mark as verified — admin invited them with a known, trusted email address
+        $this->record->markEmailAsVerified();
+
         $status = Password::sendResetLink(['email' => $this->record->email]);
 
         if ($status === Password::RESET_LINK_SENT) {
