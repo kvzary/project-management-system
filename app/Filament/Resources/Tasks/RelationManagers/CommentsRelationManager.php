@@ -1,11 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\TaskResource\RelationManagers;
+namespace App\Filament\Resources\Tasks\RelationManagers;
 
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\RichEditor;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class CommentsRelationManager extends RelationManager
@@ -14,11 +19,11 @@ class CommentsRelationManager extends RelationManager
 
     protected static ?string $title = 'Comments';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\RichEditor::make('body')
+        return $schema
+            ->components([
+                RichEditor::make('body')
                     ->required()
                     ->label('Comment')
                     ->columnSpanFull()
@@ -37,16 +42,16 @@ class CommentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('body')
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('Author')
                     ->weight('bold')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('body')
+                TextColumn::make('body')
                     ->label('Comment')
                     ->html()
                     ->limit(100)
                     ->wrap(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Posted')
                     ->since()
                     ->sortable(),
@@ -55,22 +60,23 @@ class CommentsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Add Comment')
-                    ->mutateFormDataUsing(function (array $data): array {
+                    ->mutateDataUsing(function (array $data): array {
                         $data['user_id'] = auth()->id();
+
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn ($record) => $record->user_id === auth()->id()),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn ($record) => $record->user_id === auth()->id()),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

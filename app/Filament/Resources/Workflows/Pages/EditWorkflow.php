@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\WorkflowResource\Pages;
+namespace App\Filament\Resources\Workflows\Pages;
 
-use App\Filament\Resources\WorkflowResource;
-use Filament\Actions;
+use App\Filament\Resources\Workflows\WorkflowResource;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditWorkflow extends EditRecord
@@ -13,7 +13,7 @@ class EditWorkflow extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

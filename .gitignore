@@ -16,6 +16,12 @@
 /public/build
 /public/hot
 /public/storage
+/public/css/filament
+/public/js/filament
+/public/js/relaticle
+/public/vendor/livewire
+/public/fonts
+composer.phar
 /storage/*.key
 /storage/pail
 /vendor

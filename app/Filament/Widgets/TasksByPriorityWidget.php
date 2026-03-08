@@ -12,7 +12,7 @@ class TasksByPriorityWidget extends ChartWidget
 {
     use HasDepartmentScope;
 
-    protected static ?string $heading = 'Open Tasks by Priority';
+    protected ?string $heading = 'Open Tasks by Priority';
 
     protected static ?int $sort = 3;
 

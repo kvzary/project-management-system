@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\SprintResource\Pages;
+namespace App\Filament\Resources\Sprints\Pages;
 
-use App\Filament\Resources\SprintResource;
-use Filament\Actions;
+use App\Filament\Resources\Sprints\SprintResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListSprints extends ListRecords
@@ -13,7 +13,7 @@ class ListSprints extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

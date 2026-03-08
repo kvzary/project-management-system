@@ -6,7 +6,7 @@ use App\Filament\Pages\TeamWorkMonitor;
 use App\Filament\Widgets\Concerns\HasDepartmentScope;
 use App\Models\User;
 use App\Models\WorkflowStatus;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -77,7 +77,7 @@ class TeamProductivityWidget extends BaseWidget
                         default => 'danger',
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('viewWork')
                     ->label('View Work')
                     ->icon('heroicon-o-eye')

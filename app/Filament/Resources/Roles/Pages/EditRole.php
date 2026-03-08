@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\RoleResource\Pages;
+namespace App\Filament\Resources\Roles\Pages;
 
-use App\Filament\Resources\RoleResource;
+use App\Filament\Resources\Roles\RoleResource;
 use App\Support\AppPermissions;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditRole extends EditRecord
@@ -14,7 +16,7 @@ class EditRole extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('grantAll')
+            Action::make('grantAll')
                 ->label('Grant All Permissions')
                 ->icon('heroicon-o-check-badge')
                 ->color('success')
@@ -22,21 +24,21 @@ class EditRole extends EditRecord
                 ->modalHeading('Grant all permissions?')
                 ->modalDescription('This will give this role full access to every service in the app.')
                 ->action(function () {
-                    $this->record->syncPermissions(\App\Support\AppPermissions::all());
+                    $this->record->syncPermissions(AppPermissions::all());
 
                     $this->refreshFormData(
-                        collect(\App\Support\AppPermissions::RESOURCES)
+                        collect(AppPermissions::RESOURCES)
                             ->keys()
                             ->map(fn ($k) => "perms_{$k}")
                             ->toArray()
                     );
 
-                    \Filament\Notifications\Notification::make()
+                    Notification::make()
                         ->title('All permissions granted')
                         ->success()
                         ->send();
                 }),
-            Actions\Action::make('revokeAll')
+            Action::make('revokeAll')
                 ->label('Revoke All')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
@@ -46,18 +48,18 @@ class EditRole extends EditRecord
                     $this->record->syncPermissions([]);
 
                     $this->refreshFormData(
-                        collect(\App\Support\AppPermissions::RESOURCES)
+                        collect(AppPermissions::RESOURCES)
                             ->keys()
                             ->map(fn ($k) => "perms_{$k}")
                             ->toArray()
                     );
 
-                    \Filament\Notifications\Notification::make()
+                    Notification::make()
                         ->title('All permissions revoked')
                         ->success()
                         ->send();
                 }),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

@@ -2,16 +2,16 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Resources\TaskResource;
+use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\DatabaseNotification;
@@ -20,9 +20,9 @@ class Notifications extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-bell';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-bell';
 
-    protected static string $view = 'filament.pages.notifications';
+    protected string $view = 'filament.pages.notifications';
 
     protected static ?string $navigationLabel = 'Notifications';
 
@@ -35,7 +35,7 @@ class Notifications extends Page implements HasTable
         return $table
             ->query(
                 DatabaseNotification::query()
-                    ->where('notifiable_type', \App\Models\User::class)
+                    ->where('notifiable_type', User::class)
                     ->where('notifiable_id', auth()->id())
                     ->where('data->format', 'filament')
                     ->latest()
@@ -89,7 +89,7 @@ class Notifications extends Page implements HasTable
                         };
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->icon('heroicon-o-eye')
                     ->label('View')
@@ -98,18 +98,19 @@ class Notifications extends Page implements HasTable
                         if ($taskId) {
                             return $taskId;
                         }
+
                         return null;
                     })
                     ->visible(fn (DatabaseNotification $record) => isset($record->data['actions'][0]['url']))
                     ->action(function (DatabaseNotification $record): void {
-                        if (!$record->read_at) {
+                        if (! $record->read_at) {
                             $record->markAsRead();
                         }
                     }),
                 Action::make('markAsRead')
                     ->icon('heroicon-o-check')
                     ->label('Mark as Read')
-                    ->visible(fn (DatabaseNotification $record) => !$record->read_at)
+                    ->visible(fn (DatabaseNotification $record) => ! $record->read_at)
                     ->action(fn (DatabaseNotification $record) => $record->markAsRead()),
                 Action::make('markAsUnread')
                     ->icon('heroicon-o-bell')
@@ -123,7 +124,7 @@ class Notifications extends Page implements HasTable
                     ->requiresConfirmation()
                     ->action(fn (DatabaseNotification $record) => $record->delete()),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('markAsRead')
                     ->label('Mark as Read')
                     ->icon('heroicon-o-check')
@@ -152,7 +153,7 @@ class Notifications extends Page implements HasTable
     public static function getNavigationBadge(): ?string
     {
         $count = DatabaseNotification::query()
-            ->where('notifiable_type', \App\Models\User::class)
+            ->where('notifiable_type', User::class)
             ->where('notifiable_id', auth()->id())
             ->where('data->format', 'filament')
             ->whereNull('read_at')

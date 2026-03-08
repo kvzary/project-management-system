@@ -1,23 +1,24 @@
 <?php
 
-namespace App\Filament\Resources\ProjectResource\Pages;
+namespace App\Filament\Resources\Projects\Pages;
 
 use App\Enums\ProjectStatus;
-use App\Filament\Resources\ProjectResource;
+use App\Filament\Resources\Projects\ProjectResource;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\PresenceService;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Collection;
 
 class ViewProject extends Page implements HasForms
 {
@@ -26,7 +27,7 @@ class ViewProject extends Page implements HasForms
 
     protected static string $resource = ProjectResource::class;
 
-    protected static string $view = 'filament.resources.project-resource.pages.view-project';
+    protected string $view = 'filament.resources.project-resource.pages.view-project';
 
     public ?array $detailsData = [];
 
@@ -65,7 +66,7 @@ class ViewProject extends Page implements HasForms
         $this->trackPresence();
     }
 
-    public function getViewers(): \Illuminate\Support\Collection
+    public function getViewers(): Collection
     {
         $viewerIds = PresenceService::getViewerIds('project', $this->record->id);
         $currentUserId = auth()->id();
@@ -103,14 +104,14 @@ class ViewProject extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 
-    public function detailsForm(Form $form): Form
+    public function detailsForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('department_id')
                     ->label('Department')
                     ->options(function () {
@@ -160,10 +161,10 @@ class ViewProject extends Page implements HasForms
             ->model($this->record);
     }
 
-    public function descriptionForm(Form $form): Form
+    public function descriptionForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 RichEditor::make('description')
                     ->hiddenLabel()
                     ->toolbarButtons([

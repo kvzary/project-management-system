@@ -14,13 +14,13 @@ class TeamTaskTrendsWidget extends ChartWidget
 {
     use HasDepartmentScope;
 
-    protected static ?string $heading = 'Team Task Trends';
+    protected ?string $heading = 'Team Task Trends';
 
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static string $view = 'filament.widgets.team-task-trends-widget';
+    protected string $view = 'filament.widgets.team-task-trends-widget';
 
     public ?string $filter = null;
 

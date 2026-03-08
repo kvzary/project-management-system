@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\SprintResource\Pages;
+namespace App\Filament\Resources\Sprints\Pages;
 
-use App\Filament\Resources\SprintResource;
-use Filament\Actions;
+use App\Filament\Resources\Sprints\SprintResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditSprint extends EditRecord
@@ -13,9 +15,9 @@ class EditSprint extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\ForceDeleteAction::make(),
-            Actions\RestoreAction::make(),
+            DeleteAction::make(),
+            ForceDeleteAction::make(),
+            RestoreAction::make(),
         ];
     }
 }

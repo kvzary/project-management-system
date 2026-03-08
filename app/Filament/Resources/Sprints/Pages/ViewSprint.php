@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\SprintResource\Pages;
+namespace App\Filament\Resources\Sprints\Pages;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
-use App\Filament\Pages\TasksKanbanBoard;
-use App\Filament\Resources\SprintResource;
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Sprints\SprintResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkflowStatus;
@@ -29,7 +28,7 @@ class ViewSprint extends Page implements HasTable
 
     protected static string $resource = SprintResource::class;
 
-    protected static string $view = 'filament.resources.sprint-resource.pages.view-sprint';
+    protected string $view = 'filament.resources.sprint-resource.pages.view-sprint';
 
     public function mount(int|string $record): void
     {
@@ -53,16 +52,10 @@ class ViewSprint extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('view_kanban')
-                ->label('View on Kanban')
-                ->icon('heroicon-o-view-columns')
-                ->color('gray')
-                ->url(TasksKanbanBoard::getUrl(['sprintFilter' => $this->record->id])),
-
             Action::make('create_task')
                 ->label('Create Task')
                 ->icon('heroicon-o-plus')
-                ->form([
+                ->schema([
                     TextInput::make('title')
                         ->required()
                         ->maxLength(255),

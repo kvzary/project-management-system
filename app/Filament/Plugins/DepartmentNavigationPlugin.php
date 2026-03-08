@@ -2,9 +2,10 @@
 
 namespace App\Filament\Plugins;
 
-use App\Filament\Resources\ProjectResource;
+use App\Filament\Resources\Projects\ProjectResource;
 use App\Models\Department;
 use Filament\Contracts\Plugin;
+use Filament\Facades\Filament;
 use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 
@@ -45,7 +46,7 @@ class DepartmentNavigationPlugin implements Plugin
                 ->isActiveWhen(fn () => (request()->query('tableFilters')['department_id']['value'] ?? null) == $dept->id);
         })->toArray();
 
-        \Filament\Facades\Filament::registerNavigationItems($items);
+        Filament::registerNavigationItems($items);
     }
 
     public static function make(): static

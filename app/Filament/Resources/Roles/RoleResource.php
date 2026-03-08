@@ -1,35 +1,47 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Roles;
 
-use App\Filament\Resources\RoleResource\Pages;
+use App\Filament\Resources\Roles\Pages\CreateRole;
+use App\Filament\Resources\Roles\Pages\EditRole;
+use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Support\AppPermissions;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Models\Role;
 
 class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         $permissionSections = [];
         foreach (AppPermissions::RESOURCES as $key => $label) {
-            $permissionSections[] = Forms\Components\Fieldset::make($label)
+            $permissionSections[] = Fieldset::make($label)
                 ->schema([
-                    Forms\Components\CheckboxList::make("perms_{$key}")
+                    CheckboxList::make("perms_{$key}")
                         ->hiddenLabel()
                         ->options(AppPermissions::optionsFor($key))
                         ->columns(4)
@@ -37,23 +49,23 @@ class RoleResource extends Resource
                 ]);
         }
 
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Role')
+        return $schema
+            ->components([
+                Section::make('Role')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->helperText('Lowercase with underscores, e.g. project_manager'),
-                        Forms\Components\Select::make('users')
+                        Select::make('users')
                             ->multiple()
                             ->relationship('users', 'name')
                             ->searchable()
                             ->preload()
                             ->label('Users with this role'),
                     ])->columns(2),
-                Forms\Components\Section::make('Permissions')
+                Section::make('Permissions')
                     ->description('Choose what users with this role can do across each service.')
                     ->schema($permissionSections)
                     ->columns(1),
@@ -64,13 +76,13 @@ class RoleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('name')
+                Stack::make([
+                    Split::make([
+                        TextColumn::make('name')
                             ->searchable()
                             ->sortable()
                             ->weight('bold'),
-                        Tables\Columns\TextColumn::make('users_count')
+                        TextColumn::make('users_count')
                             ->counts('users')
                             ->badge()
                             ->color('primary')
@@ -79,7 +91,7 @@ class RoleResource extends Resource
                             ->alignEnd()
                             ->grow(false),
                     ]),
-                    Tables\Columns\TextColumn::make('permissions_count')
+                    TextColumn::make('permissions_count')
                         ->counts('permissions')
                         ->icon('heroicon-o-shield-check')
                         ->iconColor('gray')
@@ -94,13 +106,13 @@ class RoleResource extends Resource
                 'md' => 2,
                 'xl' => 3,
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->before(function (Role $record, Tables\Actions\DeleteAction $action) {
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->before(function (Role $record, DeleteAction $action) {
                         if ($record->users()->exists()) {
                             $action->cancel();
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Cannot delete role')
                                 ->body('Remove all users from this role before deleting it.')
                                 ->danger()
@@ -108,16 +120,16 @@ class RoleResource extends Resource
                         }
                     }),
             ])
-            ->bulkActions([])
+            ->toolbarActions([])
             ->defaultSort('name');
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRoles::route('/'),
-            'create' => Pages\CreateRole::route('/create'),
-            'edit' => Pages\EditRole::route('/{record}/edit'),
+            'index' => ListRoles::route('/'),
+            'create' => CreateRole::route('/create'),
+            'edit' => EditRole::route('/{record}/edit'),
         ];
     }
 
@@ -131,12 +143,12 @@ class RoleResource extends Resource
         return auth()->user()?->isSystemAdmin() ?? false;
     }
 
-    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    public static function canEdit(Model $record): bool
     {
         return auth()->user()?->isSystemAdmin() ?? false;
     }
 
-    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    public static function canDelete(Model $record): bool
     {
         return auth()->user()?->isSystemAdmin() ?? false;
     }

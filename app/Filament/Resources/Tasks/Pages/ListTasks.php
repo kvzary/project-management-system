@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\TaskResource\Pages;
+namespace App\Filament\Resources\Tasks\Pages;
 
-use App\Filament\Resources\TaskResource;
-use Filament\Actions;
+use App\Filament\Resources\Tasks\TaskResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListTasks extends ListRecords
@@ -13,7 +13,7 @@ class ListTasks extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

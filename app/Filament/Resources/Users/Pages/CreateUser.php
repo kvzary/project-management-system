@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\UserResource\Pages;
+namespace App\Filament\Resources\Users\Pages;
 
-use App\Filament\Resources\UserResource;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Password;
@@ -29,7 +29,7 @@ class CreateUser extends CreateRecord
         if ($status === Password::RESET_LINK_SENT) {
             Notification::make()
                 ->title('Invite sent')
-                ->body($this->record->email . ' will receive an email to set their password.')
+                ->body($this->record->email.' will receive an email to set their password.')
                 ->success()
                 ->send();
         } else {

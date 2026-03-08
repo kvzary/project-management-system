@@ -1,15 +1,33 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Projects;
 
 use App\Enums\ProjectStatus;
-use App\Filament\Resources\ProjectResource\Pages;
+use App\Filament\Resources\Projects\Pages\CreateProject;
+use App\Filament\Resources\Projects\Pages\EditProject;
+use App\Filament\Resources\Projects\Pages\ListProjects;
+use App\Filament\Resources\Projects\Pages\ViewProject;
 use App\Models\Department;
 use App\Models\Project;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -20,19 +38,19 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Project Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Project Management';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Project Information')
+        return $schema
+            ->components([
+                Section::make('Project Information')
                     ->schema([
-                        Forms\Components\Select::make('department_id')
+                        Select::make('department_id')
                             ->label('Department')
                             ->options(function () {
                                 $user = auth()->user();
@@ -47,16 +65,16 @@ class ProjectResource extends Resource
                             ->searchable()
                             ->preload()
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
+                            ->afterStateUpdated(function (string $operation, $state, Set $set) {
                                 if ($operation === 'create') {
                                     $set('key', strtoupper(Str::slug($state, '_')));
                                 }
                             }),
-                        Forms\Components\TextInput::make('key')
+                        TextInput::make('key')
                             ->required()
                             ->maxLength(50)
                             ->unique(ignoreRecord: true)
@@ -64,27 +82,27 @@ class ProjectResource extends Resource
                             ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->placeholder('e.g., PROJ')
                             ->helperText('Unique project identifier (e.g., PROJ-123)'),
-                        Forms\Components\Select::make('owner_id')
+                        Select::make('owner_id')
                             ->relationship('owner', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->label('Project Owner'),
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->options(ProjectStatus::class)
                             ->default(ProjectStatus::ACTIVE)
                             ->required()
                             ->native(false),
-                        Forms\Components\Select::make('workflow_id')
+                        Select::make('workflow_id')
                             ->relationship('workflow', 'name')
                             ->searchable()
                             ->preload()
                             ->label('Workflow')
                             ->helperText('Determines the available task statuses for this project'),
                     ])->columns(2),
-                Forms\Components\Section::make('Description')
+                Section::make('Description')
                     ->schema([
-                        Forms\Components\RichEditor::make('description')
+                        RichEditor::make('description')
                             ->columnSpanFull()
                             ->toolbarButtons([
                                 'bold',
@@ -98,20 +116,20 @@ class ProjectResource extends Resource
                                 'undo',
                             ]),
                     ]),
-                Forms\Components\Section::make('People')
+                Section::make('People')
                     ->schema([
-                        Forms\Components\Select::make('product_manager_id')
+                        Select::make('product_manager_id')
                             ->relationship('productManager', 'name')
                             ->searchable()
                             ->preload()
                             ->label('Product Manager'),
-                        Forms\Components\Select::make('creators')
+                        Select::make('creators')
                             ->relationship('creators', 'name')
                             ->multiple()
                             ->searchable()
                             ->preload()
                             ->label('Creators'),
-                        Forms\Components\Select::make('members')
+                        Select::make('members')
                             ->relationship('members', 'name')
                             ->multiple()
                             ->searchable()
@@ -120,13 +138,13 @@ class ProjectResource extends Resource
                     ])
                     ->columns(3)
                     ->collapsible(),
-                Forms\Components\Section::make('Development')
+                Section::make('Development')
                     ->schema([
-                        Forms\Components\TextInput::make('branch')
+                        TextInput::make('branch')
                             ->label('Branch')
                             ->placeholder('feature/epic-name')
                             ->helperText('Main branch for this epic/project'),
-                        Forms\Components\TextInput::make('pull_request_url')
+                        TextInput::make('pull_request_url')
                             ->label('Pull Request')
                             ->url()
                             ->placeholder('https://github.com/org/repo/pull/123')
@@ -141,28 +159,28 @@ class ProjectResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
+                Stack::make([
                     // Top row: key badge + status badge
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('key')
+                    Split::make([
+                        TextColumn::make('key')
                             ->badge()
                             ->color('primary')
                             ->searchable()
                             ->grow(false),
-                        Tables\Columns\TextColumn::make('status')
+                        TextColumn::make('status')
                             ->badge()
                             ->sortable()
                             ->alignEnd(),
                     ]),
 
                     // Project name
-                    Tables\Columns\TextColumn::make('name')
+                    TextColumn::make('name')
                         ->weight('bold')
                         ->searchable()
                         ->size('sm'),
 
                     // Description preview
-                    Tables\Columns\TextColumn::make('description')
+                    TextColumn::make('description')
                         ->html()
                         ->limit(90)
                         ->color('gray')
@@ -170,15 +188,15 @@ class ProjectResource extends Resource
                         ->lineClamp(2),
 
                     // Department badge
-                    Tables\Columns\TextColumn::make('department.name')
+                    TextColumn::make('department.name')
                         ->badge()
                         ->color('info')
                         ->size('xs'),
 
                     // Footer: stats + owner
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\Layout\Stack::make([
-                            Tables\Columns\TextColumn::make('tasks_count')
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('tasks_count')
                                 ->counts('tasks')
                                 ->icon('heroicon-o-clipboard-document-check')
                                 ->iconColor('gray')
@@ -186,7 +204,7 @@ class ProjectResource extends Resource
                                 ->color('gray')
                                 ->size('xs')
                                 ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'task' : 'tasks')),
-                            Tables\Columns\TextColumn::make('sprints_count')
+                            TextColumn::make('sprints_count')
                                 ->counts('sprints')
                                 ->icon('heroicon-o-arrow-path')
                                 ->iconColor('gray')
@@ -195,7 +213,7 @@ class ProjectResource extends Resource
                                 ->size('xs')
                                 ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'sprint' : 'sprints')),
                         ]),
-                        Tables\Columns\TextColumn::make('owner.name')
+                        TextColumn::make('owner.name')
                             ->icon('heroicon-o-user-circle')
                             ->iconColor('gray')
                             ->color('gray')
@@ -209,11 +227,11 @@ class ProjectResource extends Resource
                 'xl' => 3,
             ])
             ->filters([
-                Tables\Filters\Filter::make('hide_completed')
+                Filter::make('hide_completed')
                     ->label('Hide Completed')
                     ->query(fn (Builder $query) => $query->whereNotIn('status', [ProjectStatus::COMPLETED->value]))
                     ->default(true),
-                Tables\Filters\SelectFilter::make('department_id')
+                SelectFilter::make('department_id')
                     ->label('Department')
                     ->options(function () {
                         $user = auth()->user();
@@ -225,21 +243,21 @@ class ProjectResource extends Resource
                     })
                     ->searchable()
                     ->preload(),
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ProjectStatus::class),
-                Tables\Filters\SelectFilter::make('owner')
+                SelectFilter::make('owner')
                     ->relationship('owner', 'name'),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
@@ -254,10 +272,10 @@ class ProjectResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProjects::route('/'),
-            'create' => Pages\CreateProject::route('/create'),
-            'view' => Pages\ViewProject::route('/{record}'),
-            'edit' => Pages\EditProject::route('/{record}/edit'),
+            'index' => ListProjects::route('/'),
+            'create' => CreateProject::route('/create'),
+            'view' => ViewProject::route('/{record}'),
+            'edit' => EditProject::route('/{record}/edit'),
         ];
     }
 

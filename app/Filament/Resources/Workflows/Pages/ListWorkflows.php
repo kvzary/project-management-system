@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\WorkflowResource\Pages;
+namespace App\Filament\Resources\Workflows\Pages;
 
-use App\Filament\Resources\WorkflowResource;
-use Filament\Actions;
+use App\Filament\Resources\Workflows\WorkflowResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListWorkflows extends ListRecords
@@ -13,7 +13,7 @@ class ListWorkflows extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Filament\Resources\TaskResource\Pages;
+namespace App\Filament\Resources\Tasks\Pages;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
-use App\Filament\Resources\ProjectResource;
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\User;
 use App\Models\Workflow;
 use App\Services\PresenceService;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -19,13 +19,14 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Collection;
 
 class ViewTask extends Page implements HasForms
 {
@@ -34,7 +35,7 @@ class ViewTask extends Page implements HasForms
 
     protected static string $resource = TaskResource::class;
 
-    protected static string $view = 'filament.resources.task-resource.pages.view-task';
+    protected string $view = 'filament.resources.task-resource.pages.view-task';
 
     public ?array $detailsData = [];
 
@@ -84,7 +85,7 @@ class ViewTask extends Page implements HasForms
         $this->trackPresence();
     }
 
-    public function getViewers(): \Illuminate\Support\Collection
+    public function getViewers(): Collection
     {
         $viewerIds = PresenceService::getViewerIds('task', $this->record->id);
         $currentUserId = auth()->id();
@@ -136,14 +137,14 @@ class ViewTask extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 
-    public function detailsForm(Form $form): Form
+    public function detailsForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('project_id')
                     ->label('Project')
                     ->options(Project::orderBy('name')->pluck('name', 'id'))
@@ -212,10 +213,10 @@ class ViewTask extends Page implements HasForms
             ->model($this->record);
     }
 
-    public function descriptionForm(Form $form): Form
+    public function descriptionForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 RichEditor::make('description')
                     ->hiddenLabel()
                     ->toolbarButtons([
@@ -232,14 +233,14 @@ class ViewTask extends Page implements HasForms
             ->model($this->record);
     }
 
-    public function watchersForm(Form $form): Form
+    public function watchersForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('watchers')
                     ->label('Watchers')
                     ->multiple()
-                    ->options(\App\Models\User::pluck('name', 'id'))
+                    ->options(User::pluck('name', 'id'))
                     ->searchable()
                     ->preload()
                     ->live()

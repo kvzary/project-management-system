@@ -1,12 +1,17 @@
 <?php
 
-namespace App\Filament\Resources\DepartmentResource\RelationManagers;
+namespace App\Filament\Resources\Departments\RelationManagers;
 
 use App\Enums\DepartmentRole;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\AttachAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class MembersRelationManager extends RelationManager
@@ -17,11 +22,11 @@ class MembersRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('role')
+        return $schema
+            ->components([
+                Select::make('role')
                     ->options(DepartmentRole::options())
                     ->default(DepartmentRole::MEMBER->value)
                     ->required(),
@@ -32,12 +37,12 @@ class MembersRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\BadgeColumn::make('pivot.role')
+                BadgeColumn::make('pivot.role')
                     ->label('Role')
                     ->formatStateUsing(fn ($state) => DepartmentRole::tryFrom($state)?->label() ?? $state)
                     ->colors([
@@ -46,23 +51,23 @@ class MembersRelationManager extends RelationManager
                     ]),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
+                    ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
-                        Forms\Components\Select::make('role')
+                        Select::make('role')
                             ->options(DepartmentRole::options())
                             ->default(DepartmentRole::MEMBER->value)
                             ->required(),
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->modalHeading('Change Role'),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                DetachBulkAction::make(),
             ]);
     }
 

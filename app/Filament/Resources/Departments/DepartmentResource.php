@@ -1,14 +1,28 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Departments;
 
-use App\Filament\Resources\DepartmentResource\Pages;
-use App\Filament\Resources\DepartmentResource\RelationManagers;
+use App\Filament\Resources\Departments\Pages\CreateDepartment;
+use App\Filament\Resources\Departments\Pages\EditDepartment;
+use App\Filament\Resources\Departments\Pages\ListDepartments;
+use App\Filament\Resources\Departments\Pages\ViewDepartment;
+use App\Filament\Resources\Departments\RelationManagers\MembersRelationManager;
 use App\Models\Department;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ColorColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -17,24 +31,24 @@ class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make()
+        return $schema
+            ->components([
+                Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\ColorPicker::make('color')
+                        ColorPicker::make('color')
                             ->helperText('Used to visually identify this department'),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->columnSpanFull()
                             ->rows(3),
                     ])->columns(2),
@@ -45,23 +59,23 @@ class DepartmentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\ColorColumn::make('color')
+                Stack::make([
+                    Split::make([
+                        ColorColumn::make('color')
                             ->label('')
                             ->grow(false),
-                        Tables\Columns\TextColumn::make('name')
+                        TextColumn::make('name')
                             ->searchable()
                             ->sortable()
                             ->weight('bold'),
                     ]),
-                    Tables\Columns\TextColumn::make('description')
+                    TextColumn::make('description')
                         ->limit(80)
                         ->placeholder('No description')
                         ->color('gray')
                         ->size('xs'),
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('members_count')
+                    Split::make([
+                        TextColumn::make('members_count')
                             ->counts('members')
                             ->icon('heroicon-o-users')
                             ->iconColor('gray')
@@ -69,7 +83,7 @@ class DepartmentResource extends Resource
                             ->size('xs')
                             ->label('')
                             ->suffix(fn ($state) => ' '.((int) $state === 1 ? 'member' : 'members')),
-                        Tables\Columns\TextColumn::make('projects_count')
+                        TextColumn::make('projects_count')
                             ->counts('projects')
                             ->icon('heroicon-o-briefcase')
                             ->iconColor('gray')
@@ -86,16 +100,16 @@ class DepartmentResource extends Resource
                 'md' => 2,
                 'xl' => 3,
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make()
                     ->visible(fn () => auth()->user()->isSystemAdmin()),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn () => auth()->user()->isSystemAdmin()),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('name');
@@ -104,17 +118,17 @@ class DepartmentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\MembersRelationManager::class,
+            MembersRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDepartments::route('/'),
-            'create' => Pages\CreateDepartment::route('/create'),
-            'view' => Pages\ViewDepartment::route('/{record}'),
-            'edit' => Pages\EditDepartment::route('/{record}/edit'),
+            'index' => ListDepartments::route('/'),
+            'create' => CreateDepartment::route('/create'),
+            'view' => ViewDepartment::route('/{record}'),
+            'edit' => EditDepartment::route('/{record}/edit'),
         ];
     }
 

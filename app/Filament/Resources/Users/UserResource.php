@@ -1,15 +1,27 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Users;
 
-use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\Users\Pages\CreateUser;
+use App\Filament\Resources\Users\Pages\EditUser;
+use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\Department;
 use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Password;
 
@@ -17,36 +29,36 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make()
+        return $schema
+            ->components([
+                Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\Select::make('roles')
+                        Select::make('roles')
                             ->multiple()
                             ->relationship('roles', 'name')
                             ->preload()
                             ->label('Roles')
                             ->columnSpanFull(),
                     ])->columns(2),
-                Forms\Components\Section::make('Departments')
+                Section::make('Departments')
                     ->schema([
-                        Forms\Components\Select::make('departments')
+                        Select::make('departments')
                             ->multiple()
                             ->options(Department::orderBy('name')->pluck('name', 'id'))
                             ->searchable()
@@ -82,14 +94,14 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
+                Stack::make([
                     // Name + verified badge
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('name')
+                    Split::make([
+                        TextColumn::make('name')
                             ->searchable()
                             ->sortable()
                             ->weight('bold'),
-                        Tables\Columns\IconColumn::make('email_verified_at')
+                        IconColumn::make('email_verified_at')
                             ->boolean()
                             ->label('')
                             ->trueIcon('heroicon-o-check-badge')
@@ -101,18 +113,18 @@ class UserResource extends Resource
                             ->grow(false),
                     ]),
                     // Email
-                    Tables\Columns\TextColumn::make('email')
+                    TextColumn::make('email')
                         ->searchable()
                         ->color('gray')
                         ->size('xs')
                         ->icon('heroicon-o-envelope')
                         ->iconColor('gray'),
                     // Roles + departments
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('roles.name')
+                    Split::make([
+                        TextColumn::make('roles.name')
                             ->badge()
                             ->label(''),
-                        Tables\Columns\TextColumn::make('departments.name')
+                        TextColumn::make('departments.name')
                             ->badge()
                             ->color('info')
                             ->label('')
@@ -126,8 +138,8 @@ class UserResource extends Resource
                 'md' => 2,
                 'xl' => 3,
             ])
-            ->actions([
-                Tables\Actions\Action::make('sendInvite')
+            ->recordActions([
+                Action::make('sendInvite')
                     ->label('Send Invite')
                     ->icon('heroicon-o-envelope')
                     ->color('info')
@@ -152,12 +164,12 @@ class UserResource extends Resource
                                 ->send();
                         }
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -171,9 +183,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }

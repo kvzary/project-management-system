@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\TaskResource\Pages;
+namespace App\Filament\Resources\Tasks\Pages;
 
-use App\Filament\Resources\TaskResource;
+use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\User;
 use App\Services\PresenceService;
-use Filament\Actions;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Infolist;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 
 class EditTask extends EditRecord
@@ -58,12 +57,12 @@ class EditTask extends EditRecord
         $this->trackPresence();
     }
 
-    public function getViewers(): \Illuminate\Support\Collection
+    public function getViewers(): Collection
     {
         $viewerIds = PresenceService::getViewerIds('task', $this->record->id);
         $currentUserId = auth()->id();
 
-        $viewerIds = array_filter($viewerIds, fn($id) => $id != $currentUserId);
+        $viewerIds = array_filter($viewerIds, fn ($id) => $id != $currentUserId);
 
         if (empty($viewerIds)) {
             return collect();
@@ -75,6 +74,7 @@ class EditTask extends EditRecord
     public function getViewerCount(): int
     {
         $count = PresenceService::getViewerCount('task', $this->record->id);
+
         return max(0, $count - 1);
     }
 
@@ -83,7 +83,7 @@ class EditTask extends EditRecord
         return $this->record->watchers()->count();
     }
 
-    public function getWatchers(): \Illuminate\Support\Collection
+    public function getWatchers(): Collection
     {
         return $this->record->watchers()->limit(10)->get();
     }
@@ -102,9 +102,9 @@ class EditTask extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\ForceDeleteAction::make(),
-            Actions\RestoreAction::make(),
+            DeleteAction::make(),
+            ForceDeleteAction::make(),
+            RestoreAction::make(),
         ];
     }
 }
