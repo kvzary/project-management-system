@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->darkMode()
-            ->databaseNotifications(lazy: false)
+            ->databaseNotifications(isLazy: false)
             ->databaseNotificationsPolling('30s')
             ->plugins([
                 FilamentShieldPlugin::make(),
