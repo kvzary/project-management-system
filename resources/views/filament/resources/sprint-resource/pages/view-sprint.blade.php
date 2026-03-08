@@ -10,7 +10,7 @@
             <div class="space-y-1">
                 <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     @if($sprint->project)
-                        <a href="{{ \App\Filament\Resources\ProjectResource::getUrl('view', ['record' => $sprint->project]) }}"
+                        <a href="{{ \App\Filament\Resources\Projects\ProjectResource::getUrl('view', ['record' => $sprint->project]) }}"
                            class="text-primary-600 dark:text-primary-400 hover:underline">
                             {{ $sprint->project->name }}
                         </a>
