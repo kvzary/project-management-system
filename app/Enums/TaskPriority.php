@@ -57,4 +57,13 @@ enum TaskPriority: string implements HasColor, HasLabel {
 			self::LOW => 1,
 		};
 	}
+
+	public function toHexColor(): string {
+      return match ($this) {
+          self::CRITICAL => '#ef4444',
+          self::HIGH     => '#f59e0b',
+          self::MEDIUM   => '#0ea5e9',
+          self::LOW      => '#6b7280',
+      };
+  }
 }
