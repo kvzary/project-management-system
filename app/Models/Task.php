@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
 use App\Notifications\TaskAssignedNotification;
+use Guava\Calendar\Contracts\Eventable;
+use Guava\Calendar\ValueObjects\CalendarEvent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +20,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Task extends Model implements HasMedia {
+class Task extends Model implements HasMedia, Eventable {
 	use HasFactory;
 	use InteractsWithMedia;
 	use LogsActivity;
@@ -55,6 +57,28 @@ class Task extends Model implements HasMedia {
 			'deleted_at'	=> 'datetime',
 		];
 	}
+
+    public function toCalendarEvent(): CalendarEvent {
+
+        $icon = match ($this->status) {
+            'todo'        => '⏳',
+            'in_progress' => '🔄',
+            'done'        => '✅',
+            default       => '',
+        };
+
+        // For eloquent models, make sure to pass the model to the constructor
+        return CalendarEvent::make($this)
+            ->title("{$icon} {$this->title}")
+            ->start($this->due_date)
+            ->end($this->due_date)
+            ->extendedProps([
+                'priority'  => $this->priority?->value,
+                'status'    => $this->status,
+            ])
+            ->backgroundColor($this->priority?->toHexColor() ?? '#6b7280')
+            ->textColor('#ffffff');
+    }
 
 	public function getActivitylogOptions(): LogOptions {
 		return LogOptions::defaults()

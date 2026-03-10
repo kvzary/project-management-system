@@ -1,7 +1,9 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../../../vendor/guava/calendar/resources/css/theme.css';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../app/Livewire/**/*';
 @source '../../../../resources/views/**/*';
 @source '../../../../vendor/filament/**/*.blade.php';
 @source '../../../../vendor/relaticle/flowforge/**/*.blade.php';
+@source '../../../../vendor/guava/calendar/resources/**/*';
