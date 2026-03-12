@@ -24,6 +24,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Jeffgreco13\FilamentBreezy\BreezyCore;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -37,8 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('/images/pms-favicon-nobg-48x48-cropped.png'))
             ->login()
             ->passwordReset()
-            ->emailVerification()
-            ->profile(isSimple: false)
+            // ->emailVerification()
             ->colors([
                 'primary' => Color::Sky,
                 'gray' => Color::Slate,
@@ -50,10 +50,16 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode()
             ->databaseNotifications(isLazy: false)
             ->databaseNotificationsPolling('30s')
+            ->authGuard('web')
             ->plugins([
                 FilamentShieldPlugin::make(),
                 DepartmentNavigationPlugin::make(),
                 \Relaticle\Flowforge\FlowforgePlugin::make(),
+                BreezyCore::make()
+                    ->myProfile(shouldRegisterUserMenu: true, shouldRegisterNavigation: false, hasAvatars: false)
+                    ->enableTwoFactorAuthentication(force: false)
+                    ->enableSanctumTokens()
+                    ->enableBrowserSessions(condition: true),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
